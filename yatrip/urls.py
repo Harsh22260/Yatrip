@@ -28,6 +28,11 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/accounts/', include('accounts.urls')),
     path('api/hotels/', include('hotels.urls')),
+    path('api/rentals/', include('rentals.urls')),
+    path('api/food/', include('food.urls')),
+    path('api/transport/', include('transport.urls')),
+    path('api/attractions/', include('attractions.urls')),
+    path('api/chatbot/', include('chatbot.urls')),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
