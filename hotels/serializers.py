@@ -1,41 +1,71 @@
 from rest_framework import serializers
-from .models import Hotel, HotelImage, Room, Amenity, HotelPolicy
-
-class HotelImageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = HotelImage
-        fields = ['id', 'image', 'uploaded_at']
+from .models import Hotel, RoomType, RoomUnit, RatePlan, Availability, Booking
 
 
-class RoomSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Room
-        fields = ['id', 'room_type', 'capacity', 'price', 'is_available']
-
-
-class AmenitySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Amenity
-        fields = ['id', 'name']
-
-
-class HotelPolicySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = HotelPolicy
-        fields = ['check_in', 'check_out', 'cancellation_policy', 'extra_guest_charge']
-
-
+# 🏨 HOTEL
 class HotelSerializer(serializers.ModelSerializer):
-    owner_email = serializers.EmailField(source='owner.email', read_only=True)
-    images = HotelImageSerializer(many=True, read_only=True)
-    rooms = RoomSerializer(many=True, read_only=True)
-    amenities = AmenitySerializer(many=True, read_only=True)
-    policy = HotelPolicySerializer(read_only=True)
-
     class Meta:
         model = Hotel
         fields = [
-            'id', 'owner_email', 'name', 'description', 'address',
-            'location', 'price_per_night', 'rating', 'is_verified',
-            'created_at', 'images', 'rooms', 'amenities', 'policy'
+            'id',
+            'owner',
+            'name',
+            'description',
+            'address',
+            'location',
+            'rating',
+            'is_verified',
+            'created_at'
+        ]
+
+
+# 🏠 ROOM TYPES & UNITS
+class RoomUnitSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RoomUnit
+        fields = ['id', 'unit_code', 'is_available', 'room_type']
+
+
+class RoomTypeSerializer(serializers.ModelSerializer):
+    units = RoomUnitSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = RoomType
+        fields = [
+            'id', 'hotel', 'name', 'description', 'capacity',
+            'base_price', 'units'
+        ]
+
+
+# 💰 RATE PLAN
+class RatePlanSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RatePlan
+        fields = [
+            'id', 'room_type', 'name', 'price_multiplier',
+            'refundable', 'min_stay'
+        ]
+
+
+# 📅 AVAILABILITY
+class AvailabilitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Availability
+        fields = [
+            'id', 'room_unit', 'room_type',
+            'date', 'is_booked', 'price'
+        ]
+
+
+# 📘 BOOKING
+class BookingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Booking
+        fields = [
+            'id', 'user', 'hotel', 'room_unit', 'room_type', 'rate_plan',
+            'check_in', 'check_out', 'total_price', 'status',
+            'hold_token', 'hold_expires_at', 'created_at', 'meta'
+        ]
+        read_only_fields = [
+            'id', 'status', 'hold_token', 'hold_expires_at', 'created_at'
         ]
