@@ -1,0 +1,23 @@
+# Virtual environment
+venv/
+.env
+activate.bat
+
+# Pycache and temp files
+__pycache__/
+*.py[cod]
+*.sqlite3
+*.log
+
+# Django specific
+db.sqlite3
+media/
+staticfiles/
+
+# VS Code / IDE
+.vscode/
+.idea/
+
+# System
+.DS_Store
+Thumbs.db
