@@ -1,0 +1,164 @@
+.rtc-card {
+  background: #faf8f5;
+  border: 1px solid #e8e0d6;
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  font-family: 'DM Sans', sans-serif;
+  transition: box-shadow 0.2s;
+}
+
+.rtc-card:hover {
+  box-shadow: 0 4px 18px rgba(0,0,0,0.09);
+}
+
+.rtc-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.rtc-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1a1209;
+  margin: 0 0 4px;
+}
+
+.rtc-desc {
+  font-size: 0.82rem;
+  color: #7a6e62;
+  margin: 0 0 8px;
+  line-height: 1.5;
+}
+
+.rtc-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 0.8rem;
+  color: #5a5048;
+}
+
+.rtc-pricing {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.rtc-base {
+  display: block;
+  font-family: 'Playfair Display', serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #b5420a;
+}
+
+.rtc-label {
+  display: block;
+  font-size: 0.72rem;
+  color: #9a8f83;
+}
+
+.rtc-total {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #1a6b3c;
+  margin-top: 4px;
+}
+
+/* Units */
+.rtc-units {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.rtc-unit {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 6px;
+  letter-spacing: 0.04em;
+}
+
+.rtc-unit.available {
+  background: #D1E7DD;
+  color: #0F5132;
+}
+
+.rtc-unit.taken {
+  background: #F8D7DA;
+  color: #842029;
+  text-decoration: line-through;
+}
+
+.rtc-unit-more {
+  font-size: 0.72rem;
+  color: #9a8f83;
+  padding: 3px 6px;
+}
+
+/* Rate Plans */
+.rtc-plans-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #5a5048;
+  margin: 0 0 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.rtc-plans-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.rtc-plan-btn {
+  background: #fff;
+  border: 1.5px solid #d4c9bc;
+  color: #5a5048;
+  font-size: 0.78rem;
+  font-family: 'DM Sans', sans-serif;
+  padding: 5px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.rtc-plan-btn.active,
+.rtc-plan-btn:hover {
+  background: #1a1209;
+  border-color: #1a1209;
+  color: #fff;
+}
+
+/* Book Button */
+.rtc-book-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #b5420a, #d4691e);
+  color: #fff;
+  border: none;
+  padding: 13px;
+  border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s;
+  letter-spacing: 0.02em;
+}
+
+.rtc-book-btn:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.rtc-book-btn:disabled {
+  background: #d4c9bc;
+  cursor: not-allowed;
+}

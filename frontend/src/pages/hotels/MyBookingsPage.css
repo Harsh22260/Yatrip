@@ -1,0 +1,159 @@
+.mbp-page {
+  min-height: 100vh;
+  background: #f5f0ea;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.mbp-header {
+  background: #1a1209;
+  padding: 40px 24px 32px;
+}
+
+.mbp-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 2rem;
+  color: #f5e8d0;
+  margin: 0 0 4px;
+}
+
+.mbp-sub {
+  color: #b5a090;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.mbp-body {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 28px 24px;
+}
+
+.mbp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.mbp-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 20px 22px;
+  border: 1px solid #e8e0d6;
+  animation: mbp-in 0.3s ease;
+}
+
+@keyframes mbp-in { from { opacity: 0; transform: translateY(10px) } to { opacity: 1; transform: none } }
+
+.mbp-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.mbp-hotel-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  color: #1a1209;
+  margin: 0 0 2px;
+}
+
+.mbp-room {
+  font-size: 0.82rem;
+  color: #7a6e62;
+  margin: 0;
+}
+
+.mbp-dates {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.85rem;
+  color: #5a5048;
+  margin-bottom: 14px;
+}
+
+.mbp-nights {
+  background: #f0ece6;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  color: #7a6e62;
+}
+
+.mbp-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  border-top: 1px solid #f0ece6;
+  padding-top: 14px;
+}
+
+.mbp-price {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #b5420a;
+  flex: 1;
+}
+
+.mbp-timer {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #084298;
+  background: #CFE2FF;
+  padding: 4px 10px;
+  border-radius: 8px;
+  transition: all 0.3s;
+}
+
+.mbp-timer.urgent {
+  background: #F8D7DA;
+  color: #842029;
+}
+
+.mbp-actions { display: flex; gap: 8px; }
+
+.mbp-btn {
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.2s;
+}
+
+.mbp-btn:disabled { opacity: 0.5; }
+
+.mbp-btn.cancel {
+  background: #F8D7DA;
+  color: #842029;
+}
+
+.mbp-btn.cancel:hover:not(:disabled) { background: #f0c0c5; }
+
+.mbp-id {
+  font-size: 0.7rem;
+  font-family: monospace;
+  color: #c0b4a8;
+  margin: 8px 0 0;
+}
+
+/* States */
+.mbp-loading, .mbp-empty {
+  text-align: center;
+  padding: 60px;
+  color: #7a6e62;
+}
+
+.mbp-empty p { margin: 4px 0; }
+
+.mbp-error {
+  text-align: center;
+  padding: 40px;
+  color: #842029;
+}

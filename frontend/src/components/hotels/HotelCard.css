@@ -1,0 +1,142 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@400;500&display=swap');
+
+.hc-card {
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  cursor: pointer;
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+  font-family: 'DM Sans', sans-serif;
+  border: 1px solid #f0ece6;
+}
+
+.hc-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.13);
+}
+
+.hc-image-wrap {
+  position: relative;
+  height: 180px;
+  background: linear-gradient(135deg, #e8dfd0 0%, #c9b99a 100%);
+  overflow: hidden;
+}
+
+.hc-image-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 3.5rem;
+  opacity: 0.5;
+}
+
+.hc-verified-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: #1a6b3c;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.03em;
+}
+
+.hc-body {
+  padding: 18px 20px 20px;
+}
+
+.hc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.hc-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a1209;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hc-stars {
+  color: #d4a017;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.hc-address {
+  font-size: 0.82rem;
+  color: #7a6e62;
+  margin: 0 0 8px;
+}
+
+.hc-desc {
+  font-size: 0.84rem;
+  color: #5a5048;
+  line-height: 1.55;
+  margin: 0 0 14px;
+}
+
+.hc-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid #f0ece6;
+  padding-top: 14px;
+}
+
+.hc-price {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.hc-from {
+  font-size: 0.75rem;
+  color: #9a8f83;
+}
+
+.hc-amount {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #b5420a;
+}
+
+.hc-per {
+  font-size: 0.75rem;
+  color: #9a8f83;
+}
+
+.hc-no-price {
+  font-size: 0.82rem;
+  color: #7a6e62;
+  font-style: italic;
+}
+
+.hc-btn {
+  background: #1a1209;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.hc-btn:hover {
+  background: #b5420a;
+}

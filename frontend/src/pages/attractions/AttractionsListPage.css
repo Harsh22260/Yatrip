@@ -1,0 +1,154 @@
+.alp-page {
+  min-height: 100vh;
+  background: #f5f0ea;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.alp-header {
+  background: linear-gradient(135deg, #1e1b4b 0%, #4f46e5 100%);
+  padding: 48px 24px 40px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.alp-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+.alp-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.6rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 8px;
+  position: relative;
+}
+
+.alp-sub {
+  color: #c7d2fe;
+  margin: 0 0 28px;
+  font-size: 1rem;
+  position: relative;
+}
+
+.alp-search-wrap {
+  position: relative;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.alp-search {
+  width: 100%;
+  padding: 14px 48px 14px 20px;
+  border-radius: 12px;
+  border: none;
+  font-size: 0.95rem;
+  font-family: 'DM Sans', sans-serif;
+  background: #fff;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  box-sizing: border-box;
+  outline: none;
+}
+
+.alp-search:focus {
+  box-shadow: 0 4px 20px rgba(79,70,229,0.4);
+}
+
+.alp-search-icon {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.1rem;
+}
+
+.alp-body {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 28px 24px;
+}
+
+.alp-filters { margin-bottom: 16px; }
+
+/* City pills */
+.alp-cities {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.alp-city-btn {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1.5px solid #e0d9d0;
+  background: #fff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.8rem;
+  color: #5a5048;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.alp-city-btn.active,
+.alp-city-btn:hover {
+  background: #4f46e5;
+  border-color: #4f46e5;
+  color: #fff;
+}
+
+.alp-count {
+  font-size: 0.85rem;
+  color: #7a6e62;
+  margin: 0 0 16px;
+}
+
+/* Grid */
+.alp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 22px;
+}
+
+/* Skeleton */
+.alp-skeleton {
+  background: linear-gradient(90deg, #e8e0d6 25%, #f5f0ea 50%, #e8e0d6 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 16px;
+  height: 320px;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0 }
+  100% { background-position: -200% 0 }
+}
+
+.alp-error {
+  text-align: center;
+  padding: 48px;
+  color: #842029;
+}
+
+.alp-error button {
+  margin-top: 12px;
+  background: #4f46e5;
+  color: #fff;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.alp-empty {
+  text-align: center;
+  padding: 64px;
+  color: #7a6e62;
+}
+
+.alp-empty p { margin: 4px 0; }

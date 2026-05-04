@@ -1,0 +1,230 @@
+.bm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 14, 6, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: bm-fade-in 0.2s ease;
+}
+
+@keyframes bm-fade-in { from { opacity: 0 } to { opacity: 1 } }
+
+.bm-modal {
+  background: #fff;
+  border-radius: 20px;
+  padding: 32px;
+  width: 100%;
+  max-width: 460px;
+  position: relative;
+  font-family: 'DM Sans', sans-serif;
+  animation: bm-slide-up 0.25s ease;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+}
+
+@keyframes bm-slide-up { from { transform: translateY(24px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
+
+.bm-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: #f0ece6;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: #5a5048;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bm-close:hover { background: #e0d9d0; }
+
+.bm-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.4rem;
+  color: #1a1209;
+  margin: 0 0 4px;
+}
+
+.bm-hotel {
+  font-size: 0.9rem;
+  color: #7a6e62;
+  margin-bottom: 20px;
+}
+
+.bm-rows {
+  background: #faf8f5;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.bm-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.88rem;
+}
+
+.bm-row span { color: #7a6e62; }
+.bm-row strong { color: #1a1209; }
+
+.bm-total {
+  border-top: 1px solid #e8e0d6;
+  padding-top: 10px;
+  margin-top: 4px;
+}
+
+.bm-total strong {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  color: #b5420a;
+}
+
+.bm-id { font-size: 0.75rem; font-family: monospace; }
+
+.bm-hold-info {
+  font-size: 0.82rem;
+  color: #084298;
+  background: #CFE2FF;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+/* Timer */
+.bm-timer {
+  text-align: center;
+  margin: 8px 0 20px;
+  padding: 16px;
+  background: #faf8f5;
+  border-radius: 12px;
+  border: 2px solid #e8e0d6;
+  transition: border-color 0.3s;
+}
+
+.bm-timer.urgent {
+  border-color: #842029;
+  background: #FFF5F5;
+}
+
+.bm-timer span {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.8rem;
+  font-weight: 700;
+  color: #1a1209;
+  display: block;
+  letter-spacing: 0.06em;
+}
+
+.bm-timer.urgent span { color: #842029; }
+
+.bm-timer p {
+  font-size: 0.8rem;
+  color: #7a6e62;
+  margin: 4px 0 0;
+}
+
+/* Actions */
+.bm-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.bm-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.2s, transform 0.15s;
+}
+
+.bm-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.bm-btn.primary {
+  background: linear-gradient(135deg, #b5420a, #d4691e);
+  color: #fff;
+}
+
+.bm-btn.primary:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.bm-btn.secondary {
+  background: #f0ece6;
+  color: #5a5048;
+}
+
+.bm-btn.secondary:hover:not(:disabled) { background: #e0d9d0; }
+
+/* Error */
+.bm-error {
+  color: #842029;
+  font-size: 0.84rem;
+  background: #F8D7DA;
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+/* Success state */
+.bm-success {
+  text-align: center;
+  padding: 16px 0;
+}
+
+.bm-success-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #D1E7DD;
+  color: #0F5132;
+  font-size: 1.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+}
+
+.bm-success h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.4rem;
+  color: #1a1209;
+  margin: 0 0 8px;
+}
+
+.bm-success p { color: #5a5048; margin: 0 0 6px; font-size: 0.9rem; }
+.bm-booking-id { font-size: 0.72rem; font-family: monospace; color: #9a8f83; }
+
+/* Error state */
+.bm-error-state {
+  text-align: center;
+  padding: 16px 0;
+}
+
+.bm-error-icon {
+  font-size: 2.5rem;
+  margin-bottom: 12px;
+}
+
+.bm-error-state h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.3rem;
+  color: #842029;
+  margin: 0 0 8px;
+}

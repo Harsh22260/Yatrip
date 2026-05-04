@@ -1,0 +1,214 @@
+.fdp-page {
+  min-height: 100vh;
+  background: #fffbeb;
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* Hero */
+.fdp-hero {
+  height: 320px;
+  position: relative;
+  overflow: hidden;
+}
+
+.fdp-hero-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.4;
+}
+
+.fdp-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(30,15,0,0.92) 0%, transparent 55%);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.fdp-back-btn {
+  align-self: flex-start;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.25);
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  transition: background 0.2s;
+}
+
+.fdp-back-btn:hover { background: rgba(255,255,255,0.25); }
+
+.fdp-hero-info { color: #fff; }
+
+.fdp-badges { display: flex; gap: 8px; margin-bottom: 10px; }
+
+.fdp-type-badge, .fdp-verified-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 20px;
+  color: #fff;
+}
+
+.fdp-verified-badge { background: #166534; }
+
+.fdp-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 6px;
+  color: #fff;
+}
+
+.fdp-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.fdp-stars { color: #fbbf24; font-size: 0.95rem; }
+.fdp-rating-num { color: #fde68a; font-size: 0.82rem; }
+.fdp-avg-cost { color: #fde68a; font-size: 0.85rem; }
+.fdp-address { color: #fde68a; font-size: 0.85rem; margin: 0; }
+
+/* Image strip */
+.fdp-image-strip {
+  display: flex;
+  gap: 4px;
+  height: 90px;
+  overflow: hidden;
+  background: #1c0d00;
+}
+
+.fdp-strip-img {
+  flex: 1;
+  object-fit: cover;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.fdp-strip-img:hover { opacity: 1; }
+
+/* Body */
+.fdp-body {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+/* Tabs */
+.fdp-tabs {
+  display: flex;
+  gap: 4px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 5px;
+  margin-bottom: 22px;
+  border: 1px solid #fde68a;
+  width: fit-content;
+}
+
+.fdp-tab {
+  padding: 9px 20px;
+  border-radius: 9px;
+  border: none;
+  background: none;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: #78716c;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+
+.fdp-tab.active {
+  background: #d97706;
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Menu */
+.fdp-menu-section-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  color: #1c1917;
+  margin: 0 0 12px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #fde68a;
+}
+
+.fdp-menu-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 12px;
+}
+
+.fdp-no-menu {
+  color: #78716c;
+  text-align: center;
+  padding: 40px;
+  font-size: 0.9rem;
+}
+
+/* Info Tab */
+.fdp-info { display: flex; flex-direction: column; gap: 16px; }
+
+.fdp-info-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 18px;
+  border: 1px solid #fde68a;
+}
+
+.fdp-info-card h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1rem;
+  color: #1c1917;
+  margin: 0 0 8px;
+}
+
+.fdp-info-card p { color: #57534e; line-height: 1.7; margin: 0; font-size: 0.9rem; }
+
+.fdp-info-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.fdp-info-item {
+  background: #fff;
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #fde68a;
+}
+
+.fdp-info-icon { font-size: 1.4rem; }
+
+.fdp-info-item div { display: flex; flex-direction: column; gap: 2px; }
+.fdp-info-label { font-size: 0.7rem; color: #78716c; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+.fdp-info-val { font-size: 0.88rem; font-weight: 600; color: #1c1917; }
+
+/* States */
+.fdp-loading, .fdp-error {
+  text-align: center;
+  padding: 80px;
+  font-family: 'DM Sans', sans-serif;
+  color: #78716c;
+}
+
+.fdp-error { color: #842029; }
+.fdp-error button {
+  display: block;
+  margin: 12px auto 0;
+  background: #d97706;
+  color: #fff;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+}

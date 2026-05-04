@@ -1,0 +1,191 @@
+.hdp-page {
+  min-height: 100vh;
+  background: #f5f0ea;
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* Hero */
+.hdp-hero {
+  height: 320px;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #2b1a08 0%, #5a3415 100%);
+}
+
+.hdp-hero-bg {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8rem;
+  opacity: 0.12;
+}
+
+.hdp-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(26,18,9,0.85) 0%, transparent 60%);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.hdp-back-btn {
+  align-self: flex-start;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.25);
+  color: #f5e8d0;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  transition: background 0.2s;
+}
+
+.hdp-back-btn:hover { background: rgba(255,255,255,0.25); }
+
+.hdp-hero-info { color: #fff; }
+
+.hdp-badges {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.hdp-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.hdp-badge.verified { background: #1a6b3c; color: #fff; }
+.hdp-badge.rating { background: #d4a017; color: #fff; }
+
+.hdp-hotel-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 6px;
+  color: #f5e8d0;
+}
+
+.hdp-address { color: #c8b49a; font-size: 0.9rem; margin: 0; }
+
+/* Body */
+.hdp-body {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 32px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.hdp-section-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.3rem;
+  color: #1a1209;
+  margin: 0 0 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e8e0d6;
+}
+
+.hdp-description {
+  color: #5a5048;
+  line-height: 1.7;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+/* Date picker */
+.hdp-dates-section { background: #fff; border-radius: 16px; padding: 24px; }
+
+.hdp-dates {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.hdp-dates label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 180px;
+}
+
+.hdp-dates span {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #7a6e62;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.hdp-dates input {
+  padding: 11px 14px;
+  border: 1.5px solid #d4c9bc;
+  border-radius: 9px;
+  font-size: 0.9rem;
+  font-family: 'DM Sans', sans-serif;
+  color: #1a1209;
+  background: #faf8f5;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.hdp-dates input:focus { border-color: #b5420a; }
+
+.hdp-date-summary {
+  margin: 12px 0 0;
+  font-size: 0.85rem;
+  color: #1a6b3c;
+  font-weight: 500;
+}
+
+/* Rooms grid */
+.hdp-rooms-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 18px;
+}
+
+.hdp-rooms-loading,
+.hdp-no-rooms {
+  color: #7a6e62;
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 32px;
+}
+
+/* States */
+.hdp-loading {
+  text-align: center;
+  padding: 80px;
+  color: #7a6e62;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.hdp-error {
+  text-align: center;
+  padding: 80px;
+  color: #842029;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.hdp-error button {
+  display: block;
+  margin: 12px auto 0;
+  background: #1a1209;
+  color: #fff;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+}

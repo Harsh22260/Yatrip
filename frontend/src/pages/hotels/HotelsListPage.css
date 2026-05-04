@@ -1,0 +1,124 @@
+.hlp-page {
+  min-height: 100vh;
+  background: #f5f0ea;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.hlp-header {
+  background: linear-gradient(135deg, #1a1209 0%, #3d2b14 100%);
+  padding: 48px 24px 40px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.hlp-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+.hlp-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.6rem;
+  font-weight: 700;
+  color: #f5e8d0;
+  margin: 0 0 8px;
+  position: relative;
+}
+
+.hlp-sub {
+  color: #b5a090;
+  margin: 0 0 28px;
+  font-size: 1rem;
+  position: relative;
+}
+
+.hlp-search-wrap {
+  position: relative;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.hlp-search {
+  width: 100%;
+  padding: 14px 48px 14px 20px;
+  border-radius: 12px;
+  border: none;
+  font-size: 0.95rem;
+  font-family: 'DM Sans', sans-serif;
+  background: #fff;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  box-sizing: border-box;
+  outline: none;
+}
+
+.hlp-search:focus {
+  box-shadow: 0 4px 20px rgba(181, 66, 10, 0.35);
+}
+
+.hlp-search-icon {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.1rem;
+}
+
+.hlp-main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+
+.hlp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+/* Skeleton */
+.hlp-loading {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.hlp-skeleton {
+  background: linear-gradient(90deg, #e8e0d6 25%, #f5f0ea 50%, #e8e0d6 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 16px;
+  height: 320px;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0 }
+  100% { background-position: -200% 0 }
+}
+
+/* Error & Empty */
+.hlp-error {
+  text-align: center;
+  padding: 48px;
+  color: #842029;
+}
+
+.hlp-error button {
+  margin-top: 12px;
+  background: #b5420a;
+  color: #fff;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.hlp-empty {
+  text-align: center;
+  padding: 64px;
+  color: #7a6e62;
+  font-size: 1rem;
+}

@@ -1,64 +1,123 @@
+import uuid
+from django.contrib.auth import get_user_model
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from sentence_transformers import SentenceTransformer
-from chatbot.models import KnowledgeDocument
-from django.db import connection
-from django.conf import settings
-from groq import Groq
-import json
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated, AllowAny
 
-class ChatbotQueryView(APIView):
+from .models import Conversation, Message
+from .rag_engine import generate_response
+
+User = get_user_model()
+
+
+class ChatView(APIView):
+    """
+    POST /api/chatbot/chat/
+    Body: { "message": "...", "conversation_id": (optional), "session_id": (optional) }
+    """
+    permission_classes = [AllowAny]
+
     def post(self, request):
-        try:
-            query = request.data.get("query")
-            if not query:
-                return Response({"error": "query required"}, status=400)
-
-            # 1️⃣ Encode query to embedding
-            model = SentenceTransformer('all-MiniLM-L6-v2')
-            q_emb = model.encode(query).tolist()  # list of floats
-
-            # 2️⃣ Convert embedding to JSON string for Postgres vector comparison
-            q_emb_str = json.dumps(q_emb)
-
-            # 3️⃣ Retrieve top 5 similar docs using pgvector operator
-            with connection.cursor() as cur:
-                cur.execute("""
-                    SELECT title, content, metadata
-                    FROM chatbot_knowledgedocument
-                    ORDER BY embedding <-> %s::vector
-                    LIMIT 5;
-                """, [q_emb_str])
-                docs = cur.fetchall()
-
-            if not docs:
-                return Response({"message": "No matching results found."}, status=200)
-
-            # 4️⃣ Combine retrieved docs into context
-            context_text = "\n\n".join([f"{d[0]}: {d[1]}" for d in docs])
-            prompt = f"""
-            You are Yatrip AI Assistant.
-            Use the info below to help travelers with practical, short, clear answers.
-            Context:\n{context_text}\n
-            Question: {query}
-            """
-
-            # 5️⃣ Call Groq LLaMA3 API
-            client = Groq(api_key=settings.GROQ_API_KEY)
-            chat_completion = client.chat.completions.create(
-                model="llama3-8b-8192",
-                messages=[
-                    {"role": "system", "content": "You are Yatrip AI Assistant."},
-                    {"role": "user", "content": prompt}
-                ],
+        user_message = request.data.get("message", "").strip()
+        if not user_message:
+            return Response(
+                {"error": "Message cannot be empty."},
+                status=status.HTTP_400_BAD_REQUEST,
             )
-            answer = chat_completion.choices[0].message["content"]
 
-            return Response({
-                "question": query,
-                "answer": answer,
-                "sources": [d[0] for d in docs]
-            })
+        # ── Conversation fetch or create ───────────────────────────────────────
+        conversation_id = request.data.get("conversation_id")
+        session_id = request.data.get("session_id") or str(uuid.uuid4())
 
-        except Exception as e:
-            return Response({"error": str(e)}, status=500)
+        if conversation_id:
+            try:
+                conversation = Conversation.objects.get(id=conversation_id)
+            except Conversation.DoesNotExist:
+                conversation = self._create_conversation(request, session_id)
+        else:
+            conversation = self._create_conversation(request, session_id)
+
+        # ── Fetch last 6 messages for history ─────────────────────────────────
+        recent_messages = conversation.messages.order_by("-created_at")[:6]
+        history = [
+            {"role": msg.role, "content": msg.content}
+            for msg in reversed(recent_messages)
+        ]
+
+        # ── Save user message ──────────────────────────────────────────────────
+        Message.objects.create(
+            conversation=conversation,
+            role="user",
+            content=user_message,
+        )
+
+        # ── Generate AI response ───────────────────────────────────────────────
+        ai_response = generate_response(
+            user_message=user_message,
+            conversation_history=history,
+            use_web_search=True,
+        )
+
+        # ── Save assistant message ─────────────────────────────────────────────
+        Message.objects.create(
+            conversation=conversation,
+            role="assistant",
+            content=ai_response,
+        )
+
+        return Response(
+            {
+                "response": ai_response,
+                "conversation_id": conversation.id,
+                "session_id": conversation.session_id,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def _create_conversation(self, request, session_id):
+        user = request.user if request.user.is_authenticated else None
+        return Conversation.objects.create(user=user, session_id=session_id)
+
+
+class ConversationHistoryView(APIView):
+    """
+    GET /api/chatbot/history/<conversation_id>/
+    Ek conversation ki saari messages return karta hai
+    """
+    permission_classes = [AllowAny]
+
+    def get(self, request, conversation_id):
+        try:
+            conversation = Conversation.objects.get(id=conversation_id)
+        except Conversation.DoesNotExist:
+            return Response(
+                {"error": "Conversation not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        messages = conversation.messages.all()
+        data = [
+            {
+                "role": msg.role,
+                "content": msg.content,
+                "created_at": msg.created_at.isoformat(),
+            }
+            for msg in messages
+        ]
+        return Response({"messages": data}, status=status.HTTP_200_OK)
+
+
+class ClearConversationView(APIView):
+    """
+    DELETE /api/chatbot/clear/<conversation_id>/
+    """
+    permission_classes = [AllowAny]
+
+    def delete(self, request, conversation_id):
+        try:
+            conversation = Conversation.objects.get(id=conversation_id)
+            conversation.messages.all().delete()
+            return Response({"message": "Conversation cleared."}, status=status.HTTP_200_OK)
+        except Conversation.DoesNotExist:
+            return Response({"error": "Not found."}, status=status.HTTP_404_NOT_FOUND)

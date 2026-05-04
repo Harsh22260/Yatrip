@@ -1,0 +1,135 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@400;500;600&display=swap');
+
+.vc-card {
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  cursor: pointer;
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+  font-family: 'DM Sans', sans-serif;
+  border: 1px solid #fef3c7;
+}
+
+.vc-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.12);
+}
+
+.vc-image-wrap {
+  position: relative;
+  height: 175px;
+  overflow: hidden;
+}
+
+.vc-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.vc-placeholder {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+  opacity: 0.6;
+}
+
+.vc-type-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.vc-verified {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: #166534;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.vc-body { padding: 16px 18px 18px; }
+
+.vc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.vc-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1c1917;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vc-stars { color: #d97706; font-size: 0.85rem; flex-shrink: 0; }
+.vc-rating-num { color: #78716c; font-size: 0.78rem; font-family: 'DM Sans', sans-serif; }
+
+.vc-category {
+  display: inline-block;
+  font-size: 0.75rem;
+  color: #92400e;
+  background: #fef3c7;
+  padding: 2px 8px;
+  border-radius: 6px;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.vc-address { font-size: 0.8rem; color: #78716c; margin: 0 0 6px; }
+
+.vc-desc {
+  font-size: 0.82rem;
+  color: #57534e;
+  line-height: 1.55;
+  margin: 0 0 12px;
+}
+
+.vc-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid #fef3c7;
+  padding-top: 12px;
+  gap: 8px;
+}
+
+.vc-price-info { display: flex; flex-direction: column; gap: 2px; }
+.vc-avg { font-size: 0.82rem; font-weight: 600; color: #1c1917; }
+.vc-bucket { font-size: 0.75rem; font-weight: 600; }
+
+.vc-btn {
+  background: #1c1917;
+  color: #fff;
+  border: none;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.vc-btn:hover { background: #d97706; }

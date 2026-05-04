@@ -1,0 +1,232 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@400;500;600&display=swap');
+
+.rc-card {
+  background: #fff;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 2px 14px rgba(0,0,0,0.07);
+  cursor: pointer;
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+  font-family: 'DM Sans', sans-serif;
+  border: 1px solid #f1f5f9;
+}
+
+.rc-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.13);
+}
+
+/* Image */
+.rc-image-wrap {
+  position: relative;
+  height: 200px;
+  overflow: hidden;
+  background: #f1f5f9;
+}
+
+.rc-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.rc-card:hover .rc-image { transform: scale(1.04); }
+
+.rc-placeholder {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4.5rem;
+}
+
+/* Arrows */
+.rc-img-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255,255,255,0.85);
+  border: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  transition: opacity 0.2s;
+  z-index: 2;
+}
+
+.rc-img-arrow.left { left: 10px; }
+.rc-img-arrow.right { right: 10px; }
+.rc-img-arrow:hover { background: #fff; }
+
+/* Dots */
+.rc-img-dots {
+  position: absolute;
+  bottom: 44px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 5px;
+  z-index: 2;
+}
+
+.rc-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.6);
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+  padding: 0;
+}
+
+.rc-dot.active {
+  background: #fff;
+  width: 18px;
+  border-radius: 3px;
+}
+
+/* Badges */
+.rc-type-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  z-index: 2;
+}
+
+.rc-verified {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: #15803d;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  z-index: 2;
+}
+
+/* Price overlay */
+.rc-price-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.75), transparent);
+  padding: 20px 14px 10px;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  z-index: 2;
+}
+
+.rc-price {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.rc-per { font-size: 0.78rem; color: rgba(255,255,255,0.8); }
+
+/* Body */
+.rc-body { padding: 16px 18px 18px; }
+
+.rc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.rc-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rc-tier {
+  font-size: 0.9rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  letter-spacing: -1px;
+}
+
+.rc-address { font-size: 0.8rem; color: #64748b; margin: 0 0 10px; }
+
+/* Rooms */
+.rc-rooms { margin-bottom: 10px; }
+
+.rc-rooms-badge {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.rc-rooms-badge.full { background: #fee2e2; color: #b91c1c; }
+
+/* Amenities */
+.rc-amenities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 14px;
+}
+
+.rc-amenity-chip {
+  font-size: 0.72rem;
+  padding: 3px 8px;
+  background: #f1f5f9;
+  border-radius: 6px;
+  color: #475569;
+  font-weight: 500;
+}
+
+.rc-amenity-more {
+  font-size: 0.72rem;
+  padding: 3px 8px;
+  background: #e2e8f0;
+  border-radius: 6px;
+  color: #64748b;
+}
+
+/* Button */
+.rc-btn {
+  width: 100%;
+  background: #0f172a;
+  color: #fff;
+  border: none;
+  padding: 11px;
+  border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.rc-btn:hover {
+  background: #9333ea;
+  transform: translateY(-1px);
+}

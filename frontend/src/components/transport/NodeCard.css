@@ -1,0 +1,79 @@
+.nc-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: #fff;
+  border-radius: 12px;
+  border: 1.5px solid #e0e7ff;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  position: relative;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.nc-card:hover {
+  border-color: var(--node-color);
+  box-shadow: 0 3px 14px rgba(0,0,0,0.08);
+  transform: translateX(3px);
+}
+
+.nc-card.selected {
+  border-color: var(--node-color);
+  background: color-mix(in srgb, var(--node-color) 6%, #fff);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+.nc-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+
+.nc-body { flex: 1; min-width: 0; }
+
+.nc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.nc-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1e1b4b;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nc-type-badge {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.nc-city, .nc-address {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.nc-address { margin-top: 2px; }
+
+.nc-selected-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
