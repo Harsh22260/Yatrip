@@ -1,186 +1,219 @@
 """
-Yatrip RAG Engine
------------------
-Gemini (LLM) + SentenceTransformers (Embeddings, local) + ChromaDB
+RAG Engine — Pinecone + Google Gemini Embeddings + LangChain
+============================================================
+Yeh file sab kuch handle karti hai:
+1. Pinecone vector store initialize karna
+2. Documents ko embed karke Pinecone mein store karna
+3. Query pe relevant docs retrieve karna
+4. Gemini se final answer generate karna (with conversation history)
 """
- 
+
 import os
 import logging
-import uuid
-from typing import Optional, List
- 
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import StrOutputParser
-from langchain_community.tools import DuckDuckGoSearchRun
-from chromadb import EmbeddingFunction, Embeddings
-import chromadb
- 
+from typing import List, Tuple
+
+from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
+from langchain_pinecone import PineconeVectorStore
+from langchain.chains import ConversationalRetrievalChain
+from langchain.memory import ConversationBufferWindowMemory
+from langchain.schema import HumanMessage, AIMessage
+from langchain.prompts import PromptTemplate
+from pinecone import Pinecone, ServerlessSpec
+
 logger = logging.getLogger(__name__)
- 
-CHROMA_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "chroma_db")
- 
- 
-class LocalEmbeddingFunction(EmbeddingFunction):
-    """
-    SentenceTransformers — 100% local, free, no API needed.
-    """
-    def __init__(self):
-        from sentence_transformers import SentenceTransformer
-        self.model = SentenceTransformer("all-MiniLM-L6-v2")
- 
-    def __call__(self, input: List[str]) -> Embeddings:
-        embeddings = self.model.encode(input, convert_to_numpy=True)
-        return embeddings.tolist()
- 
- 
-def get_collection():
-    chroma_client = chromadb.PersistentClient(path=CHROMA_PATH)
-    return chroma_client.get_or_create_collection(
-        name="yatrip_knowledge",
-        embedding_function=LocalEmbeddingFunction(),
-    )
- 
- 
-def get_llm():
-    return ChatGoogleGenerativeAI(
-        model="gemini-1.5-flash",
+
+# ─── Pinecone Setup ───────────────────────────────────────
+def get_pinecone_index():
+    """Pinecone index initialize karo, agar nahi hai toh create karo"""
+    pc = Pinecone(api_key=os.environ.get("PINECONE_API_KEY"))
+    index_name = os.environ.get("PINECONE_INDEX_NAME", "yatrip-rag")
+
+    existing = [i.name for i in pc.list_indexes()]
+    if index_name not in existing:
+        pc.create_index(
+            name=index_name,
+            dimension=768,  # Gemini embedding-001 dimension
+            metric="cosine",
+            spec=ServerlessSpec(cloud="aws", region="us-east-1"),
+        )
+        logger.info(f"Pinecone index '{index_name}' created.")
+
+    return pc.Index(index_name), index_name
+
+
+# ─── Embeddings ───────────────────────────────────────────
+def get_embeddings():
+    return GoogleGenerativeAIEmbeddings(
+        model="models/embedding-001",
         google_api_key=os.environ.get("GEMINI_API_KEY"),
-        temperature=0.3,
+    )
+
+
+# ─── Vector Store ─────────────────────────────────────────
+def get_vector_store():
+    _, index_name = get_pinecone_index()
+    embeddings = get_embeddings()
+    return PineconeVectorStore(
+        index_name=index_name,
+        embedding=embeddings,
+        pinecone_api_key=os.environ.get("PINECONE_API_KEY"),
+    )
+
+
+# ─── LLM ──────────────────────────────────────────────────
+def get_llm():
+    """
+    Gemini 2.0 Flash — free tier best model
+    Free limits: 15 RPM, 1M tokens/day
+    """
+    return ChatGoogleGenerativeAI(
+        model="gemini-2.0-flash",
+        google_api_key=os.environ.get("GEMINI_API_KEY"),
+        temperature=0.7,
         convert_system_message_to_human=True,
     )
- 
- 
-SYSTEM_PROMPT = """You are Yatrip's friendly AI travel assistant. Yatrip is an Indian travel platform that helps users discover hotels, restaurants, attractions, transport, and rentals across India.
- 
-Your primary goals (in order of priority):
-1. Help users with Yatrip's services — hotels, food, attractions, rentals, transport bookings
-2. Answer travel questions using the context provided below
-3. Use web search results when Yatrip's internal data doesn't have the answer
-4. Always encourage users to book through Yatrip
- 
-Guidelines:
-- Always respond in the same language the user writes in (Hindi/English/Hinglish)
-- Be friendly, helpful, and concise
-- Never make up prices or availability — direct them to check on the website
- 
---- YATRIP KNOWLEDGE BASE ---
+
+
+# ─── System Prompt ────────────────────────────────────────
+SYSTEM_PROMPT = """
+You are Yatrip AI, a smart travel assistant for the Yatrip platform.
+
+You help users with:
+- Hotels, rooms, and bookings
+- Restaurants and street food
+- Tourist attractions
+- Transport options (bus, metro, auto, taxi)
+- PG, homestay, hostels
+- Trip planning and itineraries
+
+Rules:
+1. Always respond in the SAME language the user writes in.
+   - If user writes in English → reply in English
+   - If user writes in Hindi → reply in Hindi
+   - If user writes in Hinglish → reply in Hinglish
+2. Default language is English if unsure.
+3. Use the context below if relevant, otherwise use your own knowledge.
+4. Always give specific, helpful recommendations.
+5. Show prices in Indian Rupees (₹).
+6. Be concise, friendly, and accurate.
+
+Context from Yatrip database:
 {context}
- 
---- WEB SEARCH RESULTS ---
-{web_context}
- 
---- CONVERSATION HISTORY ---
-{history}
+
+Answer the user's latest question based on conversation history provided.
 """
- 
- 
-def search_web(query: str) -> str:
+
+QA_PROMPT = PromptTemplate(
+    input_variables=["context", "question"],
+    template=SYSTEM_PROMPT + "\n\nUser ka sawaal: {question}\n\nTera jawab:"
+)
+
+
+# ─── Main RAG Function ────────────────────────────────────
+def get_rag_response(
+    query: str,
+    chat_history: List[Tuple[str, str]] = None,
+    top_k: int = 4,
+) -> dict:
+    """
+    Main function — query leke RAG response deta hai
+
+    Args:
+        query: User ka message
+        chat_history: List of (human, ai) tuples — conversation history
+        top_k: Kitne docs retrieve karne hain
+
+    Returns:
+        { "answer": str, "sources": list }
+    """
     try:
-        search = DuckDuckGoSearchRun()
-        return search.run(f"India travel {query}")[:2000]
+        vector_store = get_vector_store()
+        llm = get_llm()
+        retriever = vector_store.as_retriever(
+            search_type="similarity",
+            search_kwargs={"k": top_k}
+        )
+
+        # Build LangChain memory from DB history
+        memory = ConversationBufferWindowMemory(
+            memory_key="chat_history",
+            return_messages=True,
+            output_key="answer",
+            k=10,  # Last 10 exchanges yaad rakhega
+        )
+
+        if chat_history:
+            for human_msg, ai_msg in chat_history:
+                memory.chat_memory.add_user_message(human_msg)
+                memory.chat_memory.add_ai_message(ai_msg)
+
+        # ConversationalRetrievalChain
+        chain = ConversationalRetrievalChain.from_llm(
+            llm=llm,
+            retriever=retriever,
+            memory=memory,
+            combine_docs_chain_kwargs={"prompt": QA_PROMPT},
+            return_source_documents=True,
+            verbose=False,
+        )
+
+        result = chain.invoke({"question": query})
+        answer = result.get("answer", "Sorry, koi jawab nahi mila.")
+
+        # Extract source names
+        source_docs = result.get("source_documents", [])
+        sources = list(set([
+            doc.metadata.get("source", doc.metadata.get("title", "Yatrip DB"))
+            for doc in source_docs
+        ]))
+
+        return {"answer": answer, "sources": sources}
+
     except Exception as e:
-        logger.warning(f"Web search failed: {e}")
-        return ""
- 
- 
-def get_rag_context(query: str, k: int = 4) -> str:
-    try:
-        collection = get_collection()
-        results = collection.query(query_texts=[query], n_results=k)
-        docs = results.get("documents", [[]])[0]
-        metadatas = results.get("metadatas", [[]])[0]
-        if not docs:
-            return "No specific Yatrip data found for this query."
-        parts = []
-        for doc, meta in zip(docs, metadatas):
-            title = meta.get("title", "Info") if meta else "Info"
-            parts.append(f"[{title}]\n{doc}")
-        return "\n\n".join(parts)
-    except Exception as e:
-        logger.warning(f"RAG retrieval failed: {e}")
-        return ""
- 
- 
-def format_history(messages: list) -> str:
-    if not messages:
-        return "No previous conversation."
-    history = []
-    for msg in messages[-6:]:
-        role = "User" if msg["role"] == "user" else "Yatrip Assistant"
-        history.append(f"{role}: {msg['content']}")
-    return "\n".join(history)
- 
- 
-def generate_response(
-    user_message: str,
-    conversation_history: Optional[list] = None,
-    use_web_search: bool = True,
-) -> str:
-    try:
-        rag_context = get_rag_context(user_message)
-        web_context = search_web(user_message) if use_web_search else ""
-        history_str = format_history(conversation_history or [])
- 
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", SYSTEM_PROMPT),
-            ("human", "{question}"),
-        ])
- 
-        chain = prompt | get_llm() | StrOutputParser()
- 
-        return chain.invoke({
-            "context": rag_context,
-            "web_context": web_context or "No web results.",
-            "history": history_str,
-            "question": user_message,
-        })
- 
-    except Exception as e:
-        logger.error(f"RAG generation error: {e}")
-        return "Sorry, I'm having trouble right now. Please try again or contact Yatrip support!"
- 
- 
-def ingest_text(title: str, content: str, source: str = "website", url: str = "") -> int:
-    splitter = RecursiveCharacterTextSplitter(
-        chunk_size=800,
-        chunk_overlap=100,
-        separators=["\n\n", "\n", ".", " "],
-    )
-    chunks = splitter.split_text(content)
-    if not chunks:
-        return 0
- 
-    collection = get_collection()
-    ids = [str(uuid.uuid4()) for _ in chunks]
-    metadatas = [{"title": title, "source": source, "url": url} for _ in chunks]
-    collection.add(documents=chunks, metadatas=metadatas, ids=ids)
-    logger.info(f"Ingested '{title}' -> {len(chunks)} chunks")
-    return len(chunks)
- 
- 
-def ingest_url(url: str, title: str = "") -> int:
-    try:
-        import requests
-        from bs4 import BeautifulSoup
- 
-        headers = {"User-Agent": "Mozilla/5.0 (compatible; YatripBot/1.0)"}
-        resp = requests.get(url, headers=headers, timeout=10)
-        resp.raise_for_status()
-        soup = BeautifulSoup(resp.text, "html.parser")
-        for tag in soup(["script", "style", "nav", "footer", "header"]):
-            tag.decompose()
-        text = soup.get_text(separator="\n", strip=True)
-        page_title = title or (soup.title.string if soup.title else url)
-        return ingest_text(page_title, text, source="website", url=url)
-    except Exception as e:
-        logger.error(f"URL ingest failed for {url}: {e}")
-        return 0
- 
- 
-def clear_vectorstore():
-    import shutil
-    if os.path.exists(CHROMA_PATH):
-        shutil.rmtree(CHROMA_PATH)
-        logger.info("ChromaDB cleared.")
+        logger.error(f"RAG error: {e}")
+        # Fallback — direct LLM without RAG
+        try:
+            llm = ChatGoogleGenerativeAI(
+                model="gemini-2.0-flash",
+                google_api_key=os.environ.get("GEMINI_API_KEY"),
+                temperature=0.7,
+                convert_system_message_to_human=True,
+            )
+            fallback_prompt = f"""Tu Yatrip ka travel assistant hai.
+User pooch raha hai: {query}
+Helpful Hinglish mein jawab de."""
+            response = llm.invoke([HumanMessage(content=fallback_prompt)])
+            return {"answer": response.content, "sources": []}
+        except Exception as e2:
+            logger.error(f"Fallback LLM error: {e2}")
+            return {"answer": "Sorry, abhi service unavailable hai. Thodi der baad try karo.", "sources": []}
+
+
+# ─── Document Ingestion ───────────────────────────────────
+def ingest_documents(documents: list):
+    """
+    Documents ko Pinecone mein store karo
+    Call karo: management command se (ingest_data.py)
+
+    documents format:
+    [
+        {"content": "...", "metadata": {"source": "hotels", "title": "..."}},
+        ...
+    ]
+    """
+    from langchain.schema import Document
+
+    vector_store = get_vector_store()
+    docs = [
+        Document(page_content=d["content"], metadata=d.get("metadata", {}))
+        for d in documents
+    ]
+
+    # Batch mein add karo (Pinecone free tier limit)
+    batch_size = 100
+    for i in range(0, len(docs), batch_size):
+        batch = docs[i:i + batch_size]
+        vector_store.add_documents(batch)
+        logger.info(f"Ingested batch {i // batch_size + 1}: {len(batch)} docs")
+
+    return len(docs)

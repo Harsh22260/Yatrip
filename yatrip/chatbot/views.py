@@ -1,123 +1,161 @@
-import uuid
-from django.contrib.auth import get_user_model
+import logging
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework import permissions, status
+from django.shortcuts import get_object_or_404
 
-from .models import Conversation, Message
-from .rag_engine import generate_response
+from .models import ChatSession, ChatMessage
+from .serializers import ChatMessageSerializer, ChatSessionSerializer
 
-User = get_user_model()
+logger = logging.getLogger(__name__)
 
 
+# ─── Helper: session ke messages se history banana ────────
+def build_chat_history(session: ChatSession, limit: int = 10):
+    """
+    DB se last N message pairs fetch karo — LangChain format mein
+    Returns: List of (human_msg, ai_msg) tuples
+    """
+    messages = session.messages.order_by('created_at')
+    history = []
+    user_msg = None
+
+    for msg in messages:
+        if msg.role == 'user':
+            user_msg = msg.content
+        elif msg.role == 'assistant' and user_msg:
+            history.append((user_msg, msg.content))
+            user_msg = None
+
+    return history[-limit:]  # Last N pairs
+
+
+# ─── CHAT VIEW ────────────────────────────────────────────
 class ChatView(APIView):
-    """
-    POST /api/chatbot/chat/
-    Body: { "message": "...", "conversation_id": (optional), "session_id": (optional) }
-    """
-    permission_classes = [AllowAny]
+    permission_classes = [permissions.AllowAny]  # TODO: change to IsAuthenticated after login fix
 
     def post(self, request):
         user_message = request.data.get("message", "").strip()
+        session_id = request.data.get("session_id")
+
         if not user_message:
-            return Response(
-                {"error": "Message cannot be empty."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            return Response({"error": "Message required"}, status=400)
 
-        # ── Conversation fetch or create ───────────────────────────────────────
-        conversation_id = request.data.get("conversation_id")
-        session_id = request.data.get("session_id") or str(uuid.uuid4())
+        if len(user_message) > 2000:
+            return Response({"error": "Message too long (max 2000 chars)"}, status=400)
 
-        if conversation_id:
+        # ── Session handle karo ──
+        user = request.user if request.user.is_authenticated else None
+        if session_id:
             try:
-                conversation = Conversation.objects.get(id=conversation_id)
-            except Conversation.DoesNotExist:
-                conversation = self._create_conversation(request, session_id)
+                session = ChatSession.objects.get(id=session_id)
+            except ChatSession.DoesNotExist:
+                session = ChatSession.objects.create(user=user)
         else:
-            conversation = self._create_conversation(request, session_id)
+            session = ChatSession.objects.create(user=user)
 
-        # ── Fetch last 6 messages for history ─────────────────────────────────
-        recent_messages = conversation.messages.order_by("-created_at")[:6]
-        history = [
-            {"role": msg.role, "content": msg.content}
-            for msg in reversed(recent_messages)
-        ]
-
-        # ── Save user message ──────────────────────────────────────────────────
-        Message.objects.create(
-            conversation=conversation,
-            role="user",
+        # ── User message save karo ──
+        ChatMessage.objects.create(
+            session=session,
+            role='user',
             content=user_message,
         )
 
-        # ── Generate AI response ───────────────────────────────────────────────
-        ai_response = generate_response(
-            user_message=user_message,
-            conversation_history=history,
-            use_web_search=True,
-        )
+        # ── Conversation history build karo ──
+        chat_history = build_chat_history(session, limit=10)
 
-        # ── Save assistant message ─────────────────────────────────────────────
-        Message.objects.create(
-            conversation=conversation,
-            role="assistant",
-            content=ai_response,
-        )
-
-        return Response(
-            {
-                "response": ai_response,
-                "conversation_id": conversation.id,
-                "session_id": conversation.session_id,
-            },
-            status=status.HTTP_200_OK,
-        )
-
-    def _create_conversation(self, request, session_id):
-        user = request.user if request.user.is_authenticated else None
-        return Conversation.objects.create(user=user, session_id=session_id)
-
-
-class ConversationHistoryView(APIView):
-    """
-    GET /api/chatbot/history/<conversation_id>/
-    Ek conversation ki saari messages return karta hai
-    """
-    permission_classes = [AllowAny]
-
-    def get(self, request, conversation_id):
+        # ── RAG response lo ──
         try:
-            conversation = Conversation.objects.get(id=conversation_id)
-        except Conversation.DoesNotExist:
-            return Response(
-                {"error": "Conversation not found."},
-                status=status.HTTP_404_NOT_FOUND,
+            from .rag_engine import get_rag_response  # lazy import
+            result = get_rag_response(
+                query=user_message,
+                chat_history=chat_history,
             )
+            reply = result["answer"]
+            sources = result["sources"]
+        except Exception as e:
+            logger.error(f"RAG error in view: {e}")
+            reply = "Sorry, kuch gadbad ho gayi. Thodi der baad try karo! 🙏"
+            sources = []
 
-        messages = conversation.messages.all()
-        data = [
-            {
-                "role": msg.role,
-                "content": msg.content,
-                "created_at": msg.created_at.isoformat(),
-            }
-            for msg in messages
-        ]
-        return Response({"messages": data}, status=status.HTTP_200_OK)
+        # ── Bot response save karo ──
+        ChatMessage.objects.create(
+            session=session,
+            role='assistant',
+            content=reply,
+            sources=sources,
+        )
+
+        # ── Session update time ──
+        session.save()
+
+        return Response({
+            "reply": reply,
+            "session_id": str(session.id),
+            "sources": sources,
+        }, status=200)
 
 
-class ClearConversationView(APIView):
+# ─── HISTORY VIEW ─────────────────────────────────────────
+class ChatHistoryView(APIView):
     """
-    DELETE /api/chatbot/clear/<conversation_id>/
+    GET /api/chatbot/history/?session_id=<uuid>
     """
-    permission_classes = [AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
 
-    def delete(self, request, conversation_id):
+    def get(self, request):
+        session_id = request.query_params.get("session_id")
+        if not session_id:
+            # Return all sessions of user
+            sessions = ChatSession.objects.filter(user=request.user).order_by('-updated_at')[:10]
+            return Response(ChatSessionSerializer(sessions, many=True).data)
+
+        session = get_object_or_404(ChatSession, id=session_id, user=request.user)
+        messages = session.messages.all()
+        return Response({
+            "session_id": str(session.id),
+            "messages": ChatMessageSerializer(messages, many=True).data,
+        })
+
+
+# ─── CLEAR SESSION VIEW ───────────────────────────────────
+class ClearSessionView(APIView):
+    """
+    POST /api/chatbot/clear/
+    Body: { "session_id": "..." }
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        session_id = request.data.get("session_id")
+        if not session_id:
+            return Response({"error": "session_id required"}, status=400)
+
         try:
-            conversation = Conversation.objects.get(id=conversation_id)
-            conversation.messages.all().delete()
-            return Response({"message": "Conversation cleared."}, status=status.HTTP_200_OK)
-        except Conversation.DoesNotExist:
-            return Response({"error": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+            session = ChatSession.objects.get(id=session_id, user=request.user)
+            session.messages.all().delete()
+            return Response({"message": "Chat cleared successfully"})
+        except ChatSession.DoesNotExist:
+            return Response({"error": "Session not found"}, status=404)
+
+
+# ─── SESSIONS LIST VIEW ───────────────────────────────────
+class SessionsListView(APIView):
+    """
+    GET /api/chatbot/sessions/
+    User ke saare sessions
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        sessions = ChatSession.objects.filter(user=request.user).order_by('-updated_at')[:20]
+        data = []
+        for s in sessions:
+            last_msg = s.messages.filter(role='user').last()
+            data.append({
+                "session_id": str(s.id),
+                "last_message": last_msg.content[:80] if last_msg else "New chat",
+                "updated_at": s.updated_at,
+                "message_count": s.messages.count(),
+            })
+        return Response(data)

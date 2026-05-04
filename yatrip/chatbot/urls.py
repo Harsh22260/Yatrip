@@ -1,8 +1,9 @@
 from django.urls import path
-from .views import ChatView, ConversationHistoryView, ClearConversationView
+from .views import ChatView, ChatHistoryView, ClearSessionView, SessionsListView
 
 urlpatterns = [
-    path("chat/", ChatView.as_view(), name="chatbot-chat"),
-    path("history/<int:conversation_id>/", ConversationHistoryView.as_view(), name="chatbot-history"),
-    path("clear/<int:conversation_id>/", ClearConversationView.as_view(), name="chatbot-clear"),
+    path('chat/',     ChatView.as_view(),        name='chatbot-chat'),
+    path('history/',  ChatHistoryView.as_view(),  name='chatbot-history'),
+    path('clear/',    ClearSessionView.as_view(), name='chatbot-clear'),
+    path('sessions/', SessionsListView.as_view(), name='chatbot-sessions'),
 ]

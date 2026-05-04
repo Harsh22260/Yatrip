@@ -1,151 +1,209 @@
 ﻿"""
 Management Command: ingest_data
+================================
+Yatrip ke saare models ka data Pinecone vector store mein ingest karta hai.
+
+Usage:
+    python manage.py ingest_data              # Sab ingest karo
+    python manage.py ingest_data --model hotels
+    python manage.py ingest_data --model attractions
+    python manage.py ingest_data --model food
+    python manage.py ingest_data --model rentals
 """
 
 from django.core.management.base import BaseCommand
-from chatbot.rag_engine import ingest_text, ingest_url, clear_vectorstore
-
-
-YATRIP_BASE_KNOWLEDGE = [
-    {
-        "title": "About Yatrip",
-        "content": """
-Yatrip is an Indian travel platform that makes travel planning easy and affordable.
-We offer the following services:
-- Hotel Bookings: Budget to luxury hotels across India
-- Food & Restaurants: Discover local cuisine and restaurants at your destination
-- Attractions: Top tourist spots, monuments, and hidden gems
-- Transport: Bus, cab, auto rentals and inter-city travel options
-- Rentals: Bike, scooter, and car rentals for local commute
-- Reviews: Authentic user reviews for all listed services
-Yatrip focuses on making travel within India seamless.
-        """,
-    },
-    {
-        "title": "Yatrip Hotel Booking",
-        "content": """
-Yatrip offers hotel bookings across India with:
-- Budget guesthouses, mid-range hotels, and luxury resorts
-- Verified photos and authentic reviews
-- Instant booking confirmation
-- Free cancellation options on many properties
-- Special deals for early bookings
-Users can filter by price, rating, amenities, and location.
-        """,
-    },
-    {
-        "title": "Yatrip Food & Restaurants",
-        "content": """
-Yatrip food section helps travelers discover:
-- Local dhabas with authentic regional cuisine
-- Popular restaurants and cafes
-- Street food spots loved by locals
-- Vegetarian and vegan-friendly options
-- Fine dining experiences
-        """,
-    },
-    {
-        "title": "Yatrip Attractions",
-        "content": """
-Yatrip lists top travel attractions across India including:
-- Historical monuments and UNESCO sites
-- Natural wonders: mountains, beaches, waterfalls
-- Religious and spiritual destinations
-- Adventure activities: trekking, rafting, paragliding
-- Family-friendly spots and theme parks
-        """,
-    },
-    {
-        "title": "Yatrip Transport & Rentals",
-        "content": """
-Yatrip transport section covers:
-- Inter-city buses and cabs
-- Airport transfers
-- Local auto/cab/rickshaw options
-- Bike and scooter rentals for self-exploration
-- Car rentals with and without drivers
-        """,
-    },
-    {
-        "title": "Yatrip Reviews System",
-        "content": """
-Yatrip has a trusted review system where:
-- Only verified travelers can leave reviews
-- Hotels, restaurants, and attractions all have ratings
-- Photos can be uploaded with reviews
-        """,
-    },
-]
+from chatbot.rag_engine import ingest_documents
 
 
 class Command(BaseCommand):
-    help = "Ingest data into ChromaDB for RAG chatbot"
+    help = 'Yatrip data ko Pinecone vector store mein ingest karo'
 
     def add_arguments(self, parser):
-        parser.add_argument("--url", type=str, help="Ingest content from a specific URL")
-        parser.add_argument("--clear", action="store_true", help="Clear all ChromaDB data")
-        parser.add_argument("--base_only", action="store_true", help="Only ingest base Yatrip knowledge")
+        parser.add_argument(
+            '--model',
+            type=str,
+            default='all',
+            help='Kaunsa model ingest karna hai: all, hotels, attractions, food, rentals, transport'
+        )
 
     def handle(self, *args, **options):
-
-        if options["clear"]:
-            self.stdout.write("Clearing ChromaDB...")
-            clear_vectorstore()
-            self.stdout.write(self.style.SUCCESS("ChromaDB cleared!"))
-            return
-
-        if options.get("url"):
-            url = options["url"]
-            self.stdout.write(f"Ingesting URL: {url}")
-            count = ingest_url(url)
-            self.stdout.write(self.style.SUCCESS(f"Ingested {count} chunks from URL"))
-            return
-
-        self.stdout.write("Ingesting Yatrip base knowledge...")
+        model = options['model']
         total = 0
-        for doc in YATRIP_BASE_KNOWLEDGE:
-            count = ingest_text(
-                title=doc["title"],
-                content=doc["content"],
-                source="website",
-            )
-            total += count
-            self.stdout.write(f"  Done: {doc['title']} -> {count} chunks")
 
-        if options.get("base_only"):
-            self.stdout.write(self.style.SUCCESS(f"Done! Total chunks: {total}"))
-            return
+        if model in ('all', 'hotels'):
+            total += self._ingest_hotels()
 
-        self.stdout.write("Ingesting data from database...")
+        if model in ('all', 'attractions'):
+            total += self._ingest_attractions()
 
-        try:
-            from hotels.models import Hotel
-            hotels = Hotel.objects.all()[:50]
-            for hotel in hotels:
-                content = f"Hotel: {hotel.name}\nDescription: {getattr(hotel, 'description', '')}"
-                ingest_text(f"Hotel: {hotel.name}", content, source="database")
-            self.stdout.write(f"  Hotels: {hotels.count()} ingested")
-        except Exception as e:
-            self.stdout.write(f"  Hotels skipped: {e}")
+        if model in ('all', 'food'):
+            total += self._ingest_food()
 
-        try:
-            from attractions.models import Attraction
-            attractions = Attraction.objects.all()[:50]
-            for attr in attractions:
-                content = f"Attraction: {attr.name}\nDescription: {getattr(attr, 'description', '')}"
-                ingest_text(f"Attraction: {attr.name}", content, source="database")
-            self.stdout.write(f"  Attractions: {attractions.count()} ingested")
-        except Exception as e:
-            self.stdout.write(f"  Attractions skipped: {e}")
+        if model in ('all', 'rentals'):
+            total += self._ingest_rentals()
 
-        try:
-            from food.models import Restaurant
-            restaurants = Restaurant.objects.all()[:50]
-            for rest in restaurants:
-                content = f"Restaurant: {rest.name}\nDescription: {getattr(rest, 'description', '')}"
-                ingest_text(f"Restaurant: {rest.name}", content, source="database")
-            self.stdout.write(f"  Restaurants: {restaurants.count()} ingested")
-        except Exception as e:
-            self.stdout.write(f"  Restaurants skipped: {e}")
+        if model in ('all', 'transport'):
+            total += self._ingest_transport()
 
-        self.stdout.write(self.style.SUCCESS(f"All done! Total chunks: {total}"))
+        self.stdout.write(self.style.SUCCESS(f'✅ Total {total} documents ingested successfully!'))
+
+    # ─── HOTELS ───────────────────────────────────────────
+    def _ingest_hotels(self):
+        from hotels.models import Hotel, RoomType
+
+        self.stdout.write('🏨 Hotels ingesting...')
+        docs = []
+
+        for hotel in Hotel.objects.prefetch_related('room_types').all():
+            room_info = ""
+            for room in hotel.room_types.all():
+                room_info += f"\n  - {room.name}: ₹{room.base_price}/night, capacity: {room.capacity}, units: {room.total_units}"
+
+            content = f"""Hotel: {hotel.name}
+Address: {hotel.address}
+Rating: {hotel.rating}/5
+Verified: {'Yes' if hotel.is_verified else 'No'}
+Description: {hotel.description or 'N/A'}
+Room Types:{room_info if room_info else ' No rooms listed'}"""
+
+            docs.append({
+                "content": content,
+                "metadata": {
+                    "source": "hotels",
+                    "title": hotel.name,
+                    "hotel_id": str(hotel.id),
+                    "address": hotel.address,
+                }
+            })
+
+        count = ingest_documents(docs)
+        self.stdout.write(f'  ✓ {count} hotel documents ingested')
+        return count
+
+    # ─── ATTRACTIONS ──────────────────────────────────────
+    def _ingest_attractions(self):
+        from attractions.models import Attraction
+
+        self.stdout.write('🏛️ Attractions ingesting...')
+        docs = []
+
+        for a in Attraction.objects.all():
+            content = f"""Tourist Attraction: {a.name}
+City: {a.city}
+Category: {a.get_category_display()}
+Address: {a.address or 'N/A'}
+Entry Fee: {'Free' if a.entry_fee == 0 else f'₹{a.entry_fee}'}
+Timings: {a.opening_time or 'N/A'} - {a.closing_time or 'N/A'}
+Description: {a.description or 'N/A'}"""
+
+            docs.append({
+                "content": content,
+                "metadata": {
+                    "source": "attractions",
+                    "title": a.name,
+                    "attraction_id": str(a.id),
+                    "city": a.city,
+                    "category": a.category,
+                }
+            })
+
+        count = ingest_documents(docs)
+        self.stdout.write(f'  ✓ {count} attraction documents ingested')
+        return count
+
+    # ─── FOOD ─────────────────────────────────────────────
+    def _ingest_food(self):
+        from food.models import FoodVendor
+
+        self.stdout.write('🍽️ Food vendors ingesting...')
+        docs = []
+
+        for v in FoodVendor.objects.prefetch_related('menu_items').select_related('category').all():
+            menu_info = ""
+            for item in v.menu_items.filter(is_available=True)[:10]:
+                menu_info += f"\n  - {item.name}: ₹{item.price}"
+
+            content = f"""Food Vendor: {v.name}
+Type: {v.get_vendor_type_display()}
+Category: {v.category.name if v.category else 'N/A'}
+Address: {v.address}
+Average Cost: ₹{v.avg_cost} per person
+Rating: {v.rating}/5
+Verified: {'Yes' if v.is_verified else 'No'}
+Description: {v.description or 'N/A'}
+Popular Menu Items:{menu_info if menu_info else ' No items listed'}"""
+
+            docs.append({
+                "content": content,
+                "metadata": {
+                    "source": "food",
+                    "title": v.name,
+                    "vendor_id": str(v.id),
+                    "vendor_type": v.vendor_type,
+                }
+            })
+
+        count = ingest_documents(docs)
+        self.stdout.write(f'  ✓ {count} food vendor documents ingested')
+        return count
+
+    # ─── RENTALS ──────────────────────────────────────────
+    def _ingest_rentals(self):
+        from rentals.models import Rental
+
+        self.stdout.write('🏡 Rentals ingesting...')
+        docs = []
+
+        for r in Rental.objects.prefetch_related('amenities').all():
+            amenities = ', '.join([a.name for a in r.amenities.all()]) or 'None'
+
+            content = f"""Rental Property: {r.name}
+Type: {r.get_rental_type_display()}
+Address: {r.address}
+Price: ₹{r.price_per_month}/month
+Available Rooms: {r.available_rooms}
+Verified: {'Yes' if r.is_verified else 'No'}
+Amenities: {amenities}
+Description: {r.description or 'N/A'}"""
+
+            docs.append({
+                "content": content,
+                "metadata": {
+                    "source": "rentals",
+                    "title": r.name,
+                    "rental_id": str(r.id),
+                    "rental_type": r.rental_type,
+                }
+            })
+
+        count = ingest_documents(docs)
+        self.stdout.write(f'  ✓ {count} rental documents ingested')
+        return count
+
+    # ─── TRANSPORT ────────────────────────────────────────
+    def _ingest_transport(self):
+        from transport.models import TransportNode
+
+        self.stdout.write('🚌 Transport nodes ingesting...')
+        docs = []
+
+        for t in TransportNode.objects.all():
+            content = f"""Transport Node: {t.name}
+Type: {t.get_node_type_display()}
+City: {t.city}
+Address: {t.address or 'N/A'}"""
+
+            docs.append({
+                "content": content,
+                "metadata": {
+                    "source": "transport",
+                    "title": t.name,
+                    "node_id": str(t.id),
+                    "node_type": t.node_type,
+                    "city": t.city,
+                }
+            })
+
+        count = ingest_documents(docs)
+        self.stdout.write(f'  ✓ {count} transport documents ingested')
+        return count

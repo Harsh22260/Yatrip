@@ -1,0 +1,92 @@
+.ci-wrap {
+  padding: 12px 20px 8px;
+  background: #fff;
+  border-top: 1px solid #e0e7ff;
+}
+
+.ci-box {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  background: #f5f3ff;
+  border: 2px solid #e0e7ff;
+  border-radius: 16px;
+  padding: 10px 10px 10px 16px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.ci-box:focus-within {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+}
+
+.ci-box.loading {
+  border-color: #818cf8;
+  background: #eef2ff;
+}
+
+.ci-input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.92rem;
+  color: #1e1b4b;
+  resize: none;
+  line-height: 1.5;
+  max-height: 140px;
+  overflow-y: auto;
+}
+
+.ci-input::placeholder { color: #a5b4fc; }
+.ci-input:disabled { opacity: 0.6; }
+
+/* Send Button */
+.ci-send-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: none;
+  background: #e0e7ff;
+  color: #a5b4fc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.18s;
+}
+
+.ci-send-btn svg { width: 18px; height: 18px; }
+
+.ci-send-btn.active {
+  background: linear-gradient(135deg, #6366f1, #818cf8);
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(99,102,241,0.4);
+  transform: scale(1.05);
+}
+
+.ci-send-btn:hover.active { opacity: 0.9; }
+.ci-send-btn:disabled { cursor: not-allowed; }
+
+/* Spinner */
+.ci-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: ci-spin 0.7s linear infinite;
+  display: block;
+}
+
+@keyframes ci-spin { to { transform: rotate(360deg); } }
+
+.ci-hint {
+  font-size: 0.68rem;
+  color: #c4b5fd;
+  text-align: center;
+  margin: 6px 0 0;
+  font-family: 'DM Sans', sans-serif;
+}

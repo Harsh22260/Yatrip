@@ -1,0 +1,43 @@
+.qs-wrap {
+  padding: 12px 20px;
+  border-top: 1px solid #e0e7ff;
+  background: #fafbff;
+}
+
+.qs-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #a5b4fc;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin: 0 0 8px;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.qs-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.qs-btn {
+  background: #fff;
+  border: 1.5px solid #e0e7ff;
+  color: #4338ca;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.qs-btn:hover {
+  background: #6366f1;
+  border-color: #6366f1;
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(99,102,241,0.25);
+}

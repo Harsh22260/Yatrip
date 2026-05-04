@@ -15,6 +15,7 @@ import FoodDetailPage from "./pages/food/FoodDetailPage";
 import TransportPage from "./pages/transport/TransportPage";
 import RentalsListPage from "./pages/rentals/RentalsListPage";
 import RentalDetailPage from "./pages/rentals/RentalDetailPage";
+import ChatbotPage from "./pages/chatbot/ChatbotPage";
 
 
 export default function App() {
@@ -36,6 +37,7 @@ export default function App() {
         <Route path="/transport" element={<TransportPage />} />
         <Route path="/rentals"     element={<RentalsListPage />} />
         <Route path="/rentals/:id" element={<RentalDetailPage />} />
+        <Route path="/chatbot" element={<ChatbotPage />} />
       </Routes>
       <Footer />
     </BrowserRouter>
