@@ -1,209 +1,166 @@
 ﻿"""
-Management Command: ingest_data
-================================
-Yatrip ke saare models ka data Pinecone vector store mein ingest karta hai.
-
-Usage:
-    python manage.py ingest_data              # Sab ingest karo
-    python manage.py ingest_data --model hotels
-    python manage.py ingest_data --model attractions
-    python manage.py ingest_data --model food
-    python manage.py ingest_data --model rentals
+python manage.py ingest_data              # sab ingest
+python manage.py ingest_data --model hotels
+python manage.py ingest_data --model attractions
+python manage.py ingest_data --model food
+python manage.py ingest_data --model rentals
+python manage.py ingest_data --model transport
 """
 
+import os
+import logging
 from django.core.management.base import BaseCommand
-from chatbot.rag_engine import ingest_documents
+
+logger = logging.getLogger(__name__)
+
+
+def ingest_documents(documents: list) -> int:
+    """Pinecone mein documents store karo"""
+    if not documents:
+        return 0
+
+    from langchain_google_genai import GoogleGenerativeAIEmbeddings
+    from langchain_pinecone import PineconeVectorStore
+    from langchain.schema import Document
+    from pinecone import Pinecone, ServerlessSpec
+
+    # Init Pinecone index
+    pc = Pinecone(api_key=os.environ.get("PINECONE_API_KEY", ""))
+    index_name = os.environ.get("PINECONE_INDEX_NAME", "yatrip-rag")
+    existing = [i.name for i in pc.list_indexes()]
+    if index_name not in existing:
+        pc.create_index(
+            name=index_name,
+            dimension=768,
+            metric="cosine",
+            spec=ServerlessSpec(cloud="aws", region="us-east-1"),
+        )
+
+    embeddings = GoogleGenerativeAIEmbeddings(
+        model="models/embedding-001",
+        google_api_key=os.environ.get("GEMINI_API_KEY", ""),
+    )
+    vs = PineconeVectorStore(
+        index_name=index_name,
+        embedding=embeddings,
+        pinecone_api_key=os.environ.get("PINECONE_API_KEY", ""),
+    )
+
+    docs = [
+        Document(page_content=d["content"], metadata=d.get("metadata", {}))
+        for d in documents
+    ]
+
+    batch_size = 100
+    for i in range(0, len(docs), batch_size):
+        vs.add_documents(docs[i:i + batch_size])
+
+    return len(docs)
 
 
 class Command(BaseCommand):
     help = 'Yatrip data ko Pinecone vector store mein ingest karo'
 
     def add_arguments(self, parser):
-        parser.add_argument(
-            '--model',
-            type=str,
-            default='all',
-            help='Kaunsa model ingest karna hai: all, hotels, attractions, food, rentals, transport'
-        )
+        parser.add_argument('--model', type=str, default='all',
+            help='all | hotels | attractions | food | rentals | transport')
 
     def handle(self, *args, **options):
         model = options['model']
         total = 0
 
-        if model in ('all', 'hotels'):
-            total += self._ingest_hotels()
+        if model in ('all', 'hotels'):       total += self._ingest_hotels()
+        if model in ('all', 'attractions'):  total += self._ingest_attractions()
+        if model in ('all', 'food'):         total += self._ingest_food()
+        if model in ('all', 'rentals'):      total += self._ingest_rentals()
+        if model in ('all', 'transport'):    total += self._ingest_transport()
 
-        if model in ('all', 'attractions'):
-            total += self._ingest_attractions()
+        self.stdout.write(self.style.SUCCESS(f'✅ Total {total} documents ingested!'))
 
-        if model in ('all', 'food'):
-            total += self._ingest_food()
-
-        if model in ('all', 'rentals'):
-            total += self._ingest_rentals()
-
-        if model in ('all', 'transport'):
-            total += self._ingest_transport()
-
-        self.stdout.write(self.style.SUCCESS(f'✅ Total {total} documents ingested successfully!'))
-
-    # ─── HOTELS ───────────────────────────────────────────
     def _ingest_hotels(self):
-        from hotels.models import Hotel, RoomType
-
-        self.stdout.write('🏨 Hotels ingesting...')
+        from hotels.models import Hotel
+        self.stdout.write('🏨 Hotels...')
         docs = []
-
-        for hotel in Hotel.objects.prefetch_related('room_types').all():
-            room_info = ""
-            for room in hotel.room_types.all():
-                room_info += f"\n  - {room.name}: ₹{room.base_price}/night, capacity: {room.capacity}, units: {room.total_units}"
-
-            content = f"""Hotel: {hotel.name}
-Address: {hotel.address}
-Rating: {hotel.rating}/5
-Verified: {'Yes' if hotel.is_verified else 'No'}
-Description: {hotel.description or 'N/A'}
-Room Types:{room_info if room_info else ' No rooms listed'}"""
-
+        for h in Hotel.objects.prefetch_related('room_types').all():
+            rooms = "\n".join([
+                f"  - {r.name}: ₹{r.base_price}/night, capacity {r.capacity}, {r.total_units} units"
+                for r in h.room_types.all()
+            ])
             docs.append({
-                "content": content,
-                "metadata": {
-                    "source": "hotels",
-                    "title": hotel.name,
-                    "hotel_id": str(hotel.id),
-                    "address": hotel.address,
-                }
+                "content": f"Hotel: {h.name}\nAddress: {h.address}\nRating: {h.rating}/5\n"
+                           f"Verified: {'Yes' if h.is_verified else 'No'}\n"
+                           f"Description: {h.description or 'N/A'}\nRooms:\n{rooms or 'N/A'}",
+                "metadata": {"source": "hotels", "title": h.name, "hotel_id": str(h.id)},
             })
-
         count = ingest_documents(docs)
-        self.stdout.write(f'  ✓ {count} hotel documents ingested')
+        self.stdout.write(f'  ✓ {count} hotel docs')
         return count
 
-    # ─── ATTRACTIONS ──────────────────────────────────────
     def _ingest_attractions(self):
         from attractions.models import Attraction
-
-        self.stdout.write('🏛️ Attractions ingesting...')
+        self.stdout.write('🏛️ Attractions...')
         docs = []
-
         for a in Attraction.objects.all():
-            content = f"""Tourist Attraction: {a.name}
-City: {a.city}
-Category: {a.get_category_display()}
-Address: {a.address or 'N/A'}
-Entry Fee: {'Free' if a.entry_fee == 0 else f'₹{a.entry_fee}'}
-Timings: {a.opening_time or 'N/A'} - {a.closing_time or 'N/A'}
-Description: {a.description or 'N/A'}"""
-
             docs.append({
-                "content": content,
-                "metadata": {
-                    "source": "attractions",
-                    "title": a.name,
-                    "attraction_id": str(a.id),
-                    "city": a.city,
-                    "category": a.category,
-                }
+                "content": f"Attraction: {a.name}\nCity: {a.city}\nCategory: {a.get_category_display()}\n"
+                           f"Address: {a.address or 'N/A'}\n"
+                           f"Entry Fee: {'Free' if a.entry_fee == 0 else f'₹{a.entry_fee}'}\n"
+                           f"Timings: {a.opening_time or 'N/A'} - {a.closing_time or 'N/A'}\n"
+                           f"Description: {a.description or 'N/A'}",
+                "metadata": {"source": "attractions", "title": a.name, "city": a.city},
             })
-
         count = ingest_documents(docs)
-        self.stdout.write(f'  ✓ {count} attraction documents ingested')
+        self.stdout.write(f'  ✓ {count} attraction docs')
         return count
 
-    # ─── FOOD ─────────────────────────────────────────────
     def _ingest_food(self):
         from food.models import FoodVendor
-
-        self.stdout.write('🍽️ Food vendors ingesting...')
+        self.stdout.write('🍽️ Food vendors...')
         docs = []
-
         for v in FoodVendor.objects.prefetch_related('menu_items').select_related('category').all():
-            menu_info = ""
-            for item in v.menu_items.filter(is_available=True)[:10]:
-                menu_info += f"\n  - {item.name}: ₹{item.price}"
-
-            content = f"""Food Vendor: {v.name}
-Type: {v.get_vendor_type_display()}
-Category: {v.category.name if v.category else 'N/A'}
-Address: {v.address}
-Average Cost: ₹{v.avg_cost} per person
-Rating: {v.rating}/5
-Verified: {'Yes' if v.is_verified else 'No'}
-Description: {v.description or 'N/A'}
-Popular Menu Items:{menu_info if menu_info else ' No items listed'}"""
-
+            menu = "\n".join([
+                f"  - {i.name}: ₹{i.price}"
+                for i in v.menu_items.filter(is_available=True)[:10]
+            ])
             docs.append({
-                "content": content,
-                "metadata": {
-                    "source": "food",
-                    "title": v.name,
-                    "vendor_id": str(v.id),
-                    "vendor_type": v.vendor_type,
-                }
+                "content": f"Food Vendor: {v.name}\nType: {v.get_vendor_type_display()}\n"
+                           f"Category: {v.category.name if v.category else 'N/A'}\n"
+                           f"Address: {v.address}\nAvg Cost: ₹{v.avg_cost}\nRating: {v.rating}/5\n"
+                           f"Description: {v.description or 'N/A'}\nMenu:\n{menu or 'N/A'}",
+                "metadata": {"source": "food", "title": v.name},
             })
-
         count = ingest_documents(docs)
-        self.stdout.write(f'  ✓ {count} food vendor documents ingested')
+        self.stdout.write(f'  ✓ {count} food docs')
         return count
 
-    # ─── RENTALS ──────────────────────────────────────────
     def _ingest_rentals(self):
         from rentals.models import Rental
-
-        self.stdout.write('🏡 Rentals ingesting...')
+        self.stdout.write('🏡 Rentals...')
         docs = []
-
         for r in Rental.objects.prefetch_related('amenities').all():
             amenities = ', '.join([a.name for a in r.amenities.all()]) or 'None'
-
-            content = f"""Rental Property: {r.name}
-Type: {r.get_rental_type_display()}
-Address: {r.address}
-Price: ₹{r.price_per_month}/month
-Available Rooms: {r.available_rooms}
-Verified: {'Yes' if r.is_verified else 'No'}
-Amenities: {amenities}
-Description: {r.description or 'N/A'}"""
-
             docs.append({
-                "content": content,
-                "metadata": {
-                    "source": "rentals",
-                    "title": r.name,
-                    "rental_id": str(r.id),
-                    "rental_type": r.rental_type,
-                }
+                "content": f"Rental: {r.name}\nType: {r.get_rental_type_display()}\n"
+                           f"Address: {r.address}\nPrice: ₹{r.price_per_month}/month\n"
+                           f"Rooms Available: {r.available_rooms}\n"
+                           f"Verified: {'Yes' if r.is_verified else 'No'}\n"
+                           f"Amenities: {amenities}\nDescription: {r.description or 'N/A'}",
+                "metadata": {"source": "rentals", "title": r.name},
             })
-
         count = ingest_documents(docs)
-        self.stdout.write(f'  ✓ {count} rental documents ingested')
+        self.stdout.write(f'  ✓ {count} rental docs')
         return count
 
-    # ─── TRANSPORT ────────────────────────────────────────
     def _ingest_transport(self):
         from transport.models import TransportNode
-
-        self.stdout.write('🚌 Transport nodes ingesting...')
+        self.stdout.write('🚌 Transport...')
         docs = []
-
         for t in TransportNode.objects.all():
-            content = f"""Transport Node: {t.name}
-Type: {t.get_node_type_display()}
-City: {t.city}
-Address: {t.address or 'N/A'}"""
-
             docs.append({
-                "content": content,
-                "metadata": {
-                    "source": "transport",
-                    "title": t.name,
-                    "node_id": str(t.id),
-                    "node_type": t.node_type,
-                    "city": t.city,
-                }
+                "content": f"Transport: {t.name}\nType: {t.get_node_type_display()}\n"
+                           f"City: {t.city}\nAddress: {t.address or 'N/A'}",
+                "metadata": {"source": "transport", "title": t.name, "city": t.city},
             })
-
         count = ingest_documents(docs)
-        self.stdout.write(f'  ✓ {count} transport documents ingested')
+        self.stdout.write(f'  ✓ {count} transport docs')
         return count

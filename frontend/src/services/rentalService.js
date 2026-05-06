@@ -1,9 +1,11 @@
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
-const getAuthHeaders = () => ({
-  'Content-Type': 'application/json',
-  Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-});
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('access_token');
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  return headers;
+};
 
 // ─── RENTALS ──────────────────────────────────────────────
 export const fetchRentals = async () => {
@@ -24,6 +26,25 @@ export const fetchNearbyRentals = async (lat, lon) => {
     { headers: getAuthHeaders() }
   );
   if (!res.ok) throw new Error('Nearby fetch failed');
+  return res.json();
+};
+
+export const fetchMyRentals = async () => {
+  const res = await fetch(`${BASE_URL}/rentals/my_rentals/`, { headers: getAuthHeaders() });
+  if (!res.ok) throw new Error('My rentals fetch failed');
+  return res.json();
+};
+
+export const createRental = async (data) => {
+  const res = await fetch(`${BASE_URL}/rentals/`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.detail || 'Rental create failed');
+  }
   return res.json();
 };
 

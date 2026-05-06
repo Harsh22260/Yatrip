@@ -1,0 +1,84 @@
+.map-page {
+  min-height: 100vh;
+  background: #fafafc;
+  padding: 40px 20px;
+  font-family: 'Inter', sans-serif;
+}
+
+.map-container {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.map-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 40px;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.map-back {
+  background: none;
+  border: none;
+  color: #ff6b35;
+  cursor: pointer;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.map-header h1 {
+  font-size: 2.2rem;
+  color: #1a1a2e;
+  margin: 0 0 6px;
+}
+
+.map-header p {
+  color: #7a7a9a;
+}
+
+.map-add-btn {
+  background: #ff6b35;
+  color: #fff;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.map-empty {
+  text-align: center;
+  padding: 80px 40px;
+  background: #fff;
+  border-radius: 24px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  border: 1px solid #e8e8f0;
+}
+
+.map-empty-icon {
+  font-size: 5rem;
+  margin-bottom: 24px;
+}
+
+.map-empty h3 {
+  font-size: 1.5rem;
+  color: #1a1a2e;
+  margin-bottom: 12px;
+}
+
+.map-empty p {
+  color: #7a7a9a;
+  margin-bottom: 24px;
+}
+
+.map-primary-btn {
+  background: #ff6b35;
+  color: #fff;
+  border: none;
+  padding: 14px 32px;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}

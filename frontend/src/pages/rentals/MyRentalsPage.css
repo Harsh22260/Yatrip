@@ -1,0 +1,141 @@
+.mrp-page {
+  min-height: 100vh;
+  background: #f8fafc;
+  padding: 40px 20px;
+  font-family: 'Inter', sans-serif;
+}
+
+.mrp-container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.mrp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 40px;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.mrp-back {
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.mrp-header h1 {
+  font-size: 2.2rem;
+  color: #1e293b;
+  margin: 0 0 6px;
+}
+
+.mrp-header p {
+  color: #64748b;
+}
+
+.mrp-add-btn {
+  background: #f59e0b;
+  color: #fff;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.mrp-add-btn:hover {
+  transform: translateY(-2px);
+  background: #d97706;
+}
+
+.mrp-loading, .mrp-error {
+  text-align: center;
+  padding: 60px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.mrp-empty {
+  text-align: center;
+  padding: 80px 40px;
+  background: #fff;
+  border-radius: 24px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+}
+
+.mrp-empty-icon {
+  font-size: 5rem;
+  margin-bottom: 24px;
+}
+
+.mrp-empty h3 {
+  font-size: 1.5rem;
+  color: #1e293b;
+  margin-bottom: 12px;
+}
+
+.mrp-empty p {
+  color: #64748b;
+  margin-bottom: 24px;
+}
+
+.mrp-primary-btn {
+  background: #f59e0b;
+  color: #fff;
+  border: none;
+  padding: 14px 32px;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.mrp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.mrp-card-wrap {
+  background: #fff;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+}
+
+.mrp-card-footer {
+  padding: 16px 20px;
+  background: #f8fafc;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #f1f5f9;
+}
+
+.mrp-edit-btn {
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
+  padding: 6px 16px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mrp-status-tag {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #64748b;
+}
+
+@media (max-width: 640px) {
+  .mrp-header { flex-direction: column; align-items: flex-start; }
+  .mrp-add-btn { width: 100%; }
+}

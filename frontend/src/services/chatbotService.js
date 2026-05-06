@@ -6,18 +6,25 @@ const getAuthHeaders = () => ({
 });
 
 // ─── Send message to backend (Gemini + RAG + LangChain) ──
-export const sendMessage = async (message, sessionId = null) => {
+export const sendMessage = async (message, sessionId = null, imageFile = null) => {
+  const formData = new FormData();
+  formData.append('message', message);
+  if (sessionId) formData.append('session_id', sessionId);
+  if (imageFile) formData.append('image', imageFile);
+
   const res = await fetch(`${BASE_URL}/chatbot/chat/`, {
     method: 'POST',
-    headers: getAuthHeaders(),
-    body: JSON.stringify({ message, session_id: sessionId }),
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+      // 'Content-Type': 'multipart/form-data' is handled automatically by fetch with FormData
+    },
+    body: formData,
   });
   if (!res.ok) {
     const err = await res.json();
     throw new Error(err.error || 'Chat failed');
   }
   return res.json();
-  // Expected response: { reply: "...", session_id: "...", sources: [...] }
 };
 
 // ─── Fetch chat history ───────────────────────────────────
@@ -27,6 +34,15 @@ export const fetchChatHistory = async (sessionId) => {
     { headers: getAuthHeaders() }
   );
   if (!res.ok) throw new Error('History fetch failed');
+  return res.json();
+};
+
+// ─── Fetch All Sessions ───────────────────────────────────
+export const fetchSessionsList = async () => {
+  const res = await fetch(`${BASE_URL}/chatbot/sessions/`, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error('Sessions fetch failed');
   return res.json();
 };
 

@@ -30,8 +30,8 @@ const FoodDetailPage = () => {
   );
   if (!vendor) return null;
 
-  const { icon, label, color } = getVendorTypeMeta(vendor.vendor_type);
-  const coverImage = vendor.images?.[0]?.image;
+  const { icon, label, color } = getVendorTypeMeta(vendor.category);
+  const coverImage = vendor.image_url;
   const availableItems = vendor.menu_items?.filter((i) => i.is_available) || [];
   const unavailableItems = vendor.menu_items?.filter((i) => !i.is_available) || [];
 
@@ -50,21 +50,21 @@ const FoodDetailPage = () => {
             <h1 className="fdp-name">{vendor.name}</h1>
             <div className="fdp-meta">
               <StarRating rating={vendor.rating} />
-              <span className="fdp-avg-cost">· Avg {formatPrice(vendor.avg_cost)}</span>
+              <span className="fdp-avg-cost">· Price {formatPrice(vendor.price_level)}</span>
             </div>
             <p className="fdp-address">📍 {vendor.address}</p>
           </div>
         </div>
       </div>
 
-      {/* Image Strip */}
-      {vendor.images?.length > 1 && (
+      {/* Image Strip (Backend currently only provides one image) */}
+      {/* {vendor.images?.length > 1 && (
         <div className="fdp-image-strip">
           {vendor.images.slice(1, 5).map((img) => (
             <img key={img.id} src={img.image} alt="" className="fdp-strip-img" />
           ))}
         </div>
-      )}
+      )} */}
 
       <div className="fdp-body">
         {/* Tabs */}
@@ -128,8 +128,8 @@ const FoodDetailPage = () => {
               <div className="fdp-info-item">
                 <span className="fdp-info-icon">💰</span>
                 <div>
-                  <span className="fdp-info-label">Avg Cost</span>
-                  <span className="fdp-info-val">{formatPrice(vendor.avg_cost)}</span>
+                  <span className="fdp-info-label">Price Level</span>
+                  <span className="fdp-info-val">{formatPrice(vendor.price_level)}</span>
                 </div>
               </div>
               {vendor.category_name && (

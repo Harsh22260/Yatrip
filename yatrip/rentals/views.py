@@ -33,6 +33,12 @@ class RentalViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(rentals, many=True)
         return Response(serializer.data)
 
+    @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
+    def my_rentals(self, request):
+        rentals = Rental.objects.filter(owner=request.user).order_by('-created_at')
+        serializer = self.get_serializer(rentals, many=True)
+        return Response(serializer.data)
+
 
 class RentalImageViewSet(viewsets.ModelViewSet):
     queryset = RentalImage.objects.all()
@@ -43,4 +49,4 @@ class RentalImageViewSet(viewsets.ModelViewSet):
 class RentalAmenityViewSet(viewsets.ModelViewSet):
     queryset = RentalAmenity.objects.all()
     serializer_class = RentalAmenitySerializer
-    permission_classes = [permissions.IsAdminUser]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]

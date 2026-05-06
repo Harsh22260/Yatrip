@@ -1,92 +1,151 @@
 .ci-wrap {
-  padding: 12px 20px 8px;
-  background: #fff;
-  border-top: 1px solid #e0e7ff;
+  padding: 10px 20px 20px;
+  max-width: 840px;
+  margin: 0 auto;
+  width: 100%;
+  position: relative;
+}
+
+.ci-preview {
+  position: absolute;
+  bottom: 100%;
+  left: 30px;
+  margin-bottom: 15px;
+  background: white;
+  padding: 6px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: slideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.ci-preview img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.ci-remove-img {
+  background: #f1f5f9;
+  border: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 0.75rem;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.ci-remove-img:hover {
+  background: #ef4444;
+  color: white;
 }
 
 .ci-box {
+  background: white;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 20px;
   display: flex;
   align-items: flex-end;
+  padding: 10px 14px;
   gap: 10px;
-  background: #f5f3ff;
-  border: 2px solid #e0e7ff;
-  border-radius: 16px;
-  padding: 10px 10px 10px 16px;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
 }
 
 .ci-box:focus-within {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+  border-color: #3b82f6;
+  box-shadow: 0 10px 30px rgba(59, 130, 246, 0.1);
 }
 
-.ci-box.loading {
-  border-color: #818cf8;
-  background: #eef2ff;
+.ci-attach-btn {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  color: #64748b;
+  padding: 6px;
+  border-radius: 10px;
+  transition: all 0.2s;
+}
+
+.ci-attach-btn:hover {
+  background: #f1f5f9;
+  color: #1e293b;
 }
 
 .ci-input {
   flex: 1;
-  background: none;
   border: none;
-  outline: none;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 0.92rem;
-  color: #1e1b4b;
+  background: none;
+  padding: 8px 4px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: #1e293b;
   resize: none;
-  line-height: 1.5;
   max-height: 140px;
-  overflow-y: auto;
+  outline: none;
+  line-height: 1.5;
 }
 
-.ci-input::placeholder { color: #a5b4fc; }
-.ci-input:disabled { opacity: 0.6; }
-
-/* Send Button */
 .ci-send-btn {
   width: 38px;
   height: 38px;
-  border-radius: 10px;
+  border-radius: 12px;
+  background: #f1f5f9;
   border: none;
-  background: #e0e7ff;
-  color: #a5b4fc;
+  color: #94a3b8;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: all 0.18s;
+  transition: all 0.2s;
 }
 
-.ci-send-btn svg { width: 18px; height: 18px; }
-
 .ci-send-btn.active {
-  background: linear-gradient(135deg, #6366f1, #818cf8);
-  color: #fff;
-  box-shadow: 0 3px 10px rgba(99,102,241,0.4);
+  background: #1e293b;
+  color: white;
+  box-shadow: 0 4px 10px rgba(30, 41, 59, 0.3);
+}
+
+.ci-send-btn.active:hover {
+  background: #334155;
   transform: scale(1.05);
 }
 
-.ci-send-btn:hover.active { opacity: 0.9; }
-.ci-send-btn:disabled { cursor: not-allowed; }
-
-/* Spinner */
-.ci-spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255,255,255,0.4);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: ci-spin 0.7s linear infinite;
-  display: block;
+.ci-send-btn svg {
+  width: 20px;
+  height: 20px;
 }
 
-@keyframes ci-spin { to { transform: rotate(360deg); } }
+.ci-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2.5px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
 
 .ci-hint {
-  font-size: 0.68rem;
-  color: #c4b5fd;
   text-align: center;
-  margin: 6px 0 0;
-  font-family: 'DM Sans', sans-serif;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-top: 8px;
 }

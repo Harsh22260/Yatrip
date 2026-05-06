@@ -1,128 +1,207 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useVendors, useFoodCategories } from '../../hooks/useFood';
-import VendorCard from '../../components/food/VendorCard';
-import { filterVendors } from '../../utils/foodHelpers';
-import './FoodListPage.css';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import useFood from "../../hooks/useFood";
+import FoodCard from "../../components/food/FoodCard";
+import { FOOD_CATEGORIES, SORT_OPTIONS, PRICE_OPTIONS } from "../../utils/foodHelpers";
+import "./FoodListPage.css";
 
-const FoodListPage = () => {
-  const { vendors, loading, error, refetch } = useVendors();
-  const { categories } = useFoodCategories();
+export default function FoodListPage() {
+  const {
+    foods, total, totalPages, loading, error,
+    filters, userLocation, locationStatus,
+    requestLocation, clearLocation,
+    setFilter, setDebouncedFilter, resetFilters,
+    setPage, setCategory, retry,
+  } = useFood();
+
+  const [viewMode, setViewMode] = useState("grid");
+  const [showFilters, setShowFilters] = useState(false);
+
+  const token = localStorage.getItem('access_token');
+  const userStr = localStorage.getItem('user');
+  const user = userStr ? JSON.parse(userStr) : null;
+  const isBusiness = user?.is_business || user?.user_type === 'business' || user?.is_owner;
   const navigate = useNavigate();
 
-  const [search, setSearch] = useState('');
-  const [type, setType] = useState('all');
-  const [category, setCategory] = useState('all');
-  const [maxCost, setMaxCost] = useState('');
-
-  const filtered = filterVendors(vendors, { search, type, category, maxCost });
-
   return (
-    <div className="flp-page">
-      <header className="flp-header">
-        <h1 className="flp-title">Food & Vendors</h1>
-        <p className="flp-sub">Local eats, street food & restaurants</p>
-        <div className="flp-search-wrap">
-          <input
-            className="flp-search"
-            type="text"
-            placeholder="Search vendors or areas..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          <span className="flp-search-icon">🔍</span>
-        </div>
-      </header>
-
-      <div className="flp-body">
-        {/* Filters */}
-        <div className="flp-filters">
-          {/* Vendor Type */}
-          <div className="flp-filter-group">
-            {['all', 'registered', 'street'].map((t) => (
-              <button
-                key={t}
-                className={`flp-filter-btn ${type === t ? 'active' : ''}`}
-                onClick={() => setType(t)}
-              >
-                {t === 'all' ? '🍴 All' : t === 'registered' ? '🏪 Registered' : '🛺 Street'}
-              </button>
-            ))}
+    <div className="flp">
+      {/* ══ HEADER ══ */}
+      <div className="flp__header">
+        <div className="flp__header-top">
+          <div>
+            <h1>🍴 Food & Restaurants</h1>
+            <p>Street food, dhabas, cafés & more across India</p>
           </div>
+          <button
+            className={`flp__loc-btn flp__loc-btn--${locationStatus}`}
+            onClick={locationStatus === "granted" ? clearLocation : requestLocation}
+            disabled={locationStatus === "requesting"}
+          >
+            {locationStatus === "requesting" && <span className="flp__spinner" />}
+            {locationStatus === "idle" && "📍 Use My Location"}
+            {locationStatus === "requesting" && "Getting location..."}
+            {locationStatus === "granted" && "📍 Location On · Off"}
+            {locationStatus === "denied" && "🚫 Location Denied"}
+          </button>
+        </div>
 
-          {/* Category */}
-          {categories.length > 0 && (
-            <div className="flp-filter-group">
-              <button
-                className={`flp-filter-btn ${category === 'all' ? 'active' : ''}`}
-                onClick={() => setCategory('all')}
-              >All Categories</button>
-              {categories.map((c) => (
-                <button
-                  key={c.id}
-                  className={`flp-filter-btn ${category === c.name ? 'active' : ''}`}
-                  onClick={() => setCategory(category === c.name ? 'all' : c.name)}
-                >
-                  {c.name}
-                </button>
-              ))}
+        {/* Business Banner */}
+        {token && (
+          <div className="flp__business-bar">
+            <div className="flp__business-info">
+              <span>🏢 {isBusiness ? 'Business Account' : 'Partner with Yatrip'}</span>
+              <p>{isBusiness ? 'Manage your food outlets' : 'Want to list your restaurant? Join us'}</p>
             </div>
-          )}
-
-          {/* Max Cost */}
-          <div className="flp-cost-filter">
-            <label>Max Avg Cost: {maxCost ? `₹${maxCost}` : 'Any'}</label>
-            <input
-              type="range"
-              min="50"
-              max="1000"
-              step="50"
-              value={maxCost || 1000}
-              onChange={(e) => setMaxCost(e.target.value === '1000' ? '' : e.target.value)}
-            />
+            <div className="flp__business-actions">
+              {isBusiness && (
+                <button className="flp__biz-btn" onClick={() => navigate('/my-food-places')}>
+                  My Outlets
+                </button>
+              )}
+              <button className="flp__biz-btn primary" onClick={() => navigate('/register-food')}>
+                {isBusiness ? '+ Register Outlet' : 'List Your Restaurant'}
+              </button>
+            </div>
           </div>
+        )}
+
+        {/* ══ SEARCH ══ */}
+        <div className="flp__search-row">
+          <label className="flp__search-wrap">
+            <span>🔍</span>
+            <input
+              type="text" placeholder="Search by name or cuisine..."
+              defaultValue={filters.search}
+              onChange={e => setDebouncedFilter("search", e.target.value)}
+            />
+          </label>
+          <label className="flp__search-wrap">
+            <span>📌</span>
+            <input
+              type="text" placeholder="Search by city or area..."
+              defaultValue={filters.locationSearch}
+              onChange={e => setDebouncedFilter("locationSearch", e.target.value)}
+            />
+          </label>
+          <button
+            className={`flp__filter-btn ${showFilters ? "active" : ""}`}
+            onClick={() => setShowFilters(s => !s)}
+          >
+            🎛️ Filters {showFilters ? "▲" : "▼"}
+          </button>
         </div>
 
-        {/* Count */}
-        {!loading && (
-          <p className="flp-count">{filtered.length} vendor{filtered.length !== 1 ? 's' : ''} found</p>
-        )}
-
-        {/* Loading */}
-        {loading && (
-          <div className="flp-grid">
-            {[1,2,3,4,5,6].map((i) => <div key={i} className="flp-skeleton" />)}
+        {/* ══ FILTER PANEL ══ */}
+        {showFilters && (
+          <div className="flp__filters">
+            <div className="flp__fg">
+              <label>Sort By</label>
+              <select value={filters.sortBy} onChange={e => setFilter("sortBy", e.target.value)}>
+                {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </div>
+            <div className="flp__fg">
+              <label>Price Range</label>
+              <select value={filters.priceLevel} onChange={e => setFilter("priceLevel", e.target.value)}>
+                {PRICE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </div>
+            <div className="flp__fg">
+              <label>Diet</label>
+              <select value={filters.isVeg} onChange={e => setFilter("isVeg", e.target.value)}>
+                <option value="">Any</option>
+                <option value="true">🟢 Veg Only</option>
+                <option value="false">🔴 Non-Veg</option>
+              </select>
+            </div>
+            <div className="flp__fg">
+              <label>Min Rating</label>
+              <select value={filters.minRating} onChange={e => setFilter("minRating", e.target.value)}>
+                <option value="">Any</option>
+                <option value="3">3+ ⭐</option>
+                <option value="4">4+ ⭐</option>
+                <option value="4.5">4.5+ ⭐</option>
+              </select>
+            </div>
+            <div className="flp__fg">
+              <label>Delivery</label>
+              <select value={filters.delivery} onChange={e => setFilter("delivery", e.target.value)}>
+                <option value="">Any</option>
+                <option value="true">🛵 Delivery Only</option>
+              </select>
+            </div>
+            <button className="flp__clear-btn" onClick={resetFilters}>✕ Clear All</button>
           </div>
         )}
 
-        {error && (
-          <div className="flp-error">
-            <p>⚠ {error}</p>
-            <button onClick={refetch}>Retry</button>
-          </div>
-        )}
-
-        {!loading && !error && filtered.length === 0 && (
-          <div className="flp-empty">
-            <p>🍽️ No vendors found.</p>
-            <p>Try different filters.</p>
-          </div>
-        )}
-
-        {!loading && !error && filtered.length > 0 && (
-          <div className="flp-grid">
-            {filtered.map((v) => (
-              <VendorCard
-                key={v.id}
-                vendor={v}
-                onSelect={(vendor) => navigate(`/food/${vendor.id}`)}
-              />
-            ))}
-          </div>
-        )}
+        {/* ══ CATEGORY PILLS ══ */}
+        <div className="flp__cats">
+          {FOOD_CATEGORIES.map(cat => (
+            <button
+              key={cat.key}
+              className={`flp__cat-pill ${filters.category === cat.key ? "active" : ""}`}
+              onClick={() => setCategory(cat.key)}
+            >
+              <span>{cat.icon}</span>
+              <span>{cat.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
+
+      {/* ══ TOOLBAR ══ */}
+      <div className="flp__toolbar">
+        <span className="flp__count">
+          {loading ? "Loading..." : `${total.toLocaleString()} place${total !== 1 ? "s" : ""} found`}
+          {userLocation && !loading && " · sorted by distance"}
+        </span>
+        <div className="flp__views">
+          <button className={`flp__view-btn ${viewMode === "grid" ? "active" : ""}`} onClick={() => setViewMode("grid")}>⊞</button>
+          <button className={`flp__view-btn ${viewMode === "list" ? "active" : ""}`} onClick={() => setViewMode("list")}>☰</button>
+        </div>
+      </div>
+
+      {/* ══ ERROR ══ */}
+      {error && (
+        <div className="flp__error">
+          ⚠️ {error}
+          <button onClick={retry}>Retry</button>
+        </div>
+      )}
+
+      {/* ══ GRID/LIST ══ */}
+      {!loading && !error && foods.length === 0 ? (
+        <div className="flp__empty">
+          <span>🍽️</span>
+          <h3>No food places found</h3>
+          <p>Try a different search, category, or location</p>
+          <button onClick={resetFilters}>Reset Filters</button>
+        </div>
+      ) : (
+        <div className={`flp__grid flp__grid--${viewMode}`}>
+          {loading
+            ? Array.from({ length: 12 }).map((_, i) => <div key={i} className="fc-skeleton" />)
+            : foods.map(f => <FoodCard key={f.id} place={f} variant={viewMode} />)
+          }
+        </div>
+      )}
+
+      {/* ══ PAGINATION ══ */}
+      {!loading && totalPages > 1 && (
+        <div className="flp__pagination">
+          <button disabled={filters.page <= 1} onClick={() => setPage(filters.page - 1)}>← Prev</button>
+          <div className="flp__page-nums">
+            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+              const n = Math.max(1, filters.page - 2) + i;
+              if (n > totalPages) return null;
+              return (
+                <button key={n} className={filters.page === n ? "active" : ""} onClick={() => setPage(n)}>{n}</button>
+              );
+            })}
+          </div>
+          <button disabled={filters.page >= totalPages} onClick={() => setPage(filters.page + 1)}>Next →</button>
+        </div>
+      )}
     </div>
   );
-};
-
-export default FoodListPage;
+}

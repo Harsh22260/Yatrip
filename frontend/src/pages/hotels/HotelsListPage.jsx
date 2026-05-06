@@ -9,10 +9,15 @@ const HotelsListPage = () => {
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
 
-  const filtered = hotels.filter((h) =>
+  const token = localStorage.getItem('access_token');
+  const userStr = localStorage.getItem('user');
+  const user = userStr ? JSON.parse(userStr) : null;
+  const isBusiness = user?.is_business || user?.user_type === 'business';
+
+  const filtered = Array.isArray(hotels) ? hotels.filter((h) =>
     h.name.toLowerCase().includes(search.toLowerCase()) ||
     h.address.toLowerCase().includes(search.toLowerCase())
-  );
+  ) : [];
 
   return (
     <div className="hlp-page">
@@ -30,6 +35,34 @@ const HotelsListPage = () => {
           <span className="hlp-search-icon">🔍</span>
         </div>
       </header>
+
+      {/* Business Banner */}
+      {token && (
+        <div className="hlp-business-bar">
+          <div className="hlp-business-info">
+            <span>🏢 {isBusiness ? 'Business Account' : 'Partner with Yatrip'}</span>
+            <p>{isBusiness ? 'Manage your properties' : 'Want to list your hotel? Start here'}</p>
+          </div>
+          <div className="hlp-business-actions">
+            {isBusiness && (
+              <button className="hlp-biz-btn" onClick={() => navigate('/my-hotels')}>
+                My Hotels
+              </button>
+            )}
+            <button className="hlp-biz-btn primary" onClick={() => navigate('/register-hotel')}>
+              {isBusiness ? '+ Register Hotel' : 'List Your Hotel'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Login prompt agar login nahi kiya */}
+      {!token && (
+        <div className="hlp-login-bar">
+          <span>🔐 Login to book hotels or register your property</span>
+          <button className="hlp-login-btn" onClick={() => navigate('/login')}>Login</button>
+        </div>
+      )}
 
       <main className="hlp-main">
         {loading && (

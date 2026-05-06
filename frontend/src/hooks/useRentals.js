@@ -17,7 +17,8 @@ export const useRentals = () => {
     setError(null);
     try {
       const data = await fetchRentals();
-      setRentals(data.results || data);
+      const results = data.results || data;
+      setRentals(Array.isArray(results) ? results : []);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -61,7 +62,8 @@ export const useNearbyRentals = () => {
       async (pos) => {
         try {
           const data = await fetchNearbyRentals(pos.coords.latitude, pos.coords.longitude);
-          setRentals(data.results || data);
+          const results = data.results || data;
+          setRentals(Array.isArray(results) ? results : []);
         } catch (e) { setError(e.message); }
         finally { setLoading(false); }
       },
@@ -78,7 +80,10 @@ export const useAmenities = () => {
 
   useEffect(() => {
     fetchAmenities()
-      .then((data) => setAmenities(data.results || data))
+      .then((data) => {
+        const results = data.results || data;
+        setAmenities(Array.isArray(results) ? results : []);
+      })
       .catch(console.error);
   }, []);
 

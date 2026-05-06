@@ -1,0 +1,84 @@
+.mfp-page {
+  min-height: 100vh;
+  background: #fffcfc;
+  padding: 40px 20px;
+  font-family: 'Inter', sans-serif;
+}
+
+.mfp-container {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.mfp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 40px;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.mfp-back {
+  background: none;
+  border: none;
+  color: #b91c1c;
+  cursor: pointer;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.mfp-header h1 {
+  font-size: 2.2rem;
+  color: #7f1d1d;
+  margin: 0 0 6px;
+}
+
+.mfp-header p {
+  color: #991b1b;
+}
+
+.mfp-add-btn {
+  background: #ef4444;
+  color: #fff;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.mfp-empty {
+  text-align: center;
+  padding: 80px 40px;
+  background: #fff;
+  border-radius: 24px;
+  box-shadow: 0 4px 20px rgba(127,29,29,0.05);
+  border: 1px solid #fee2e2;
+}
+
+.mfp-empty-icon {
+  font-size: 5rem;
+  margin-bottom: 24px;
+}
+
+.mfp-empty h3 {
+  font-size: 1.5rem;
+  color: #7f1d1d;
+  margin-bottom: 12px;
+}
+
+.mfp-empty p {
+  color: #991b1b;
+  margin-bottom: 24px;
+}
+
+.mfp-primary-btn {
+  background: #ef4444;
+  color: #fff;
+  border: none;
+  padding: 14px 32px;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}

@@ -1,19 +1,37 @@
-// ─── Simple Markdown → HTML ───────────────────────────────
 export const parseMarkdown = (text) => {
   if (!text) return '';
-  return text
+  let html = text
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
     .replace(/`(.*?)`/g, '<code>$1</code>')
     .replace(/^### (.*$)/gm, '<h3>$1</h3>')
-    .replace(/^## (.*$)/gm, '<h2>$1</h2>')
-    .replace(/^- (.*$)/gm, '<li>$1</li>')
-    .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
-    .replace(/\n\n/g, '</p><p>')
-    .replace(/\n/g, '<br/>');
+    .replace(/^## (.*$)/gm, '<h2>$1</h2>');
+
+  // Better list handling
+  const lines = html.split('\n');
+  let inList = false;
+  let finalHtml = '';
+
+  lines.forEach(line => {
+    if (line.trim().startsWith('- ')) {
+      if (!inList) {
+        finalHtml += '<ul>';
+        inList = true;
+      }
+      finalHtml += `<li>${line.trim().substring(2)}</li>`;
+    } else {
+      if (inList) {
+        finalHtml += '</ul>';
+        inList = false;
+      }
+      finalHtml += line + '<br/>';
+    }
+  });
+
+  if (inList) finalHtml += '</ul>';
+  return finalHtml;
 };
 
-// ─── Timestamp formatter ──────────────────────────────────
 export const formatTime = (isoStr) => {
   if (!isoStr) return '';
   return new Date(isoStr).toLocaleTimeString('en-IN', {
@@ -21,15 +39,10 @@ export const formatTime = (isoStr) => {
   });
 };
 
-// ─── Quick Suggestions ────────────────────────────────────
 export const QUICK_SUGGESTIONS = [
-  { label: '🏨 Best hotels in Delhi', text: 'Best hotels in Delhi under ₹3000 per night?' },
-  { label: '🍽️ Street food near me', text: 'Famous street food places near me?' },
-  { label: '🏛️ Top attractions', text: 'Top tourist attractions in Agra?' },
-  { label: '🚌 Transport options', text: 'How to travel from Delhi to Jaipur?' },
-  { label: '🏡 PG in Mumbai', text: 'Affordable PGs in Mumbai with WiFi?' },
-  { label: '✈️ Plan my trip', text: 'Plan a 3-day trip to Rajasthan for 2 people' },
+  { label: '🏨 Delhi Hotels', text: 'Best hotels in Delhi under ₹3000?' },
+  { label: '🍽️ Street Food', text: 'Top 5 street food places in Mumbai?' },
+  { label: '🏛️ Taj Mahal Trip', text: 'How to plan a Taj Mahal trip from Delhi?' },
+  { label: '🚌 Transport', text: 'Intercity bus options from Bangalore to Coorg?' },
+  { label: '🌄 Hill Stations', text: 'Beautiful hill stations near Pune for weekend?' },
 ];
-
-// ─── Typing animation dots ────────────────────────────────
-export const TYPING_DOTS = '...';

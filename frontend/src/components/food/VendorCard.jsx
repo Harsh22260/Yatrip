@@ -13,9 +13,9 @@ const StarRating = ({ rating }) => {
 };
 
 const VendorCard = ({ vendor, onSelect }) => {
-  const { icon, label, color } = getVendorTypeMeta(vendor.vendor_type);
-  const priceBucket = getPriceBucket(vendor.avg_cost);
-  const coverImage = vendor.images?.[0]?.image;
+  const { icon, label, color } = getVendorTypeMeta(vendor.category);
+  const priceBucket = getPriceBucket(vendor.price_level);
+  const coverImage = vendor.image_url;
 
   return (
     <article
@@ -59,7 +59,7 @@ const VendorCard = ({ vendor, onSelect }) => {
 
         <div className="vc-footer">
           <div className="vc-price-info">
-            <span className="vc-avg">Avg: {formatPrice(vendor.avg_cost)}</span>
+            <span className="vc-avg">Avg: {formatPrice(vendor.price_level)}</span>
             <span className="vc-bucket" style={{ color: priceBucket.color }}>
               {priceBucket.label}
             </span>

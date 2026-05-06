@@ -3,7 +3,10 @@ import './ChatInput.css';
 
 const ChatInput = ({ onSend, loading, disabled }) => {
   const [value, setValue] = useState('');
+  const [image, setImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const textareaRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -12,10 +15,25 @@ const ChatInput = ({ onSend, loading, disabled }) => {
     }
   }, [value]);
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImage(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const removeImage = () => {
+    setImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   const handleSend = () => {
-    if (!value.trim() || loading || disabled) return;
-    onSend(value.trim());
+    if ((!value.trim() && !image) || loading || disabled) return;
+    onSend(value.trim(), image);
     setValue('');
+    removeImage();
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
   };
 
@@ -28,7 +46,23 @@ const ChatInput = ({ onSend, loading, disabled }) => {
 
   return (
     <div className="ci-wrap">
+      {imagePreview && (
+        <div className="ci-preview">
+          <img src={imagePreview} alt="Preview" />
+          <button className="ci-remove-img" onClick={removeImage}>✕</button>
+        </div>
+      )}
       <div className={`ci-box ${loading ? 'loading' : ''}`}>
+        <button className="ci-attach-btn" onClick={() => fileInputRef.current?.click()} title="Upload Image">
+          📎
+        </button>
+        <input 
+          type="file" 
+          ref={fileInputRef} 
+          hidden 
+          accept="image/*" 
+          onChange={handleImageChange} 
+        />
         <textarea
           ref={textareaRef}
           className="ci-input"
@@ -40,9 +74,9 @@ const ChatInput = ({ onSend, loading, disabled }) => {
           disabled={disabled}
         />
         <button
-          className={`ci-send-btn ${value.trim() && !loading ? 'active' : ''}`}
+          className={`ci-send-btn ${(value.trim() || image) && !loading ? 'active' : ''}`}
           onClick={handleSend}
-          disabled={!value.trim() || loading || disabled}
+          disabled={(!value.trim() && !image) || loading || disabled}
           title="Send (Enter)"
         >
           {loading ? (

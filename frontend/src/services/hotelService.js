@@ -1,20 +1,72 @@
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
-const getAuthHeaders = () => ({
-  'Content-Type': 'application/json',
-  Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-});
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('access_token');
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  return headers;
+};
 
 // ─── HOTELS ───────────────────────────────────────────────
 export const fetchHotels = async () => {
   const res = await fetch(`${BASE_URL}/hotels/`, { headers: getAuthHeaders() });
   if (!res.ok) throw new Error('Hotels fetch failed');
-  return res.json();
+  const data = await res.json();
+  return data.results || data;
 };
 
 export const fetchHotelById = async (id) => {
   const res = await fetch(`${BASE_URL}/hotels/${id}/`, { headers: getAuthHeaders() });
   if (!res.ok) throw new Error('Hotel not found');
+  return res.json();
+};
+
+// ─── Business: Create Hotel ───────────────────────────────
+export const createHotel = async (payload) => {
+  const res = await fetch(`${BASE_URL}/hotels/`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(JSON.stringify(err));
+  }
+  return res.json();
+};
+
+export const updateHotel = async (id, payload) => {
+  const res = await fetch(`${BASE_URL}/hotels/${id}/`, {
+    method: 'PATCH',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(JSON.stringify(err));
+  }
+  return res.json();
+};
+
+// ─── Business: My Hotels ──────────────────────────────────
+export const fetchMyHotels = async () => {
+  const res = await fetch(`${BASE_URL}/hotels/?mine=true`, { headers: getAuthHeaders() });
+  if (!res.ok) throw new Error('Failed to fetch your hotels');
+  const data = await res.json();
+  return data.results || data;
+};
+
+// ─── Business: Room Types ─────────────────────────────────
+export const createRoomType = async (payload) => {
+  const res = await fetch(`${BASE_URL}/room-types/`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(JSON.stringify(err));
+  }
   return res.json();
 };
 
@@ -25,7 +77,8 @@ export const fetchRoomTypes = async (hotelId) => {
     : `${BASE_URL}/room-types/`;
   const res = await fetch(url, { headers: getAuthHeaders() });
   if (!res.ok) throw new Error('Room types fetch failed');
-  return res.json();
+  const data = await res.json();
+  return data.results || data;
 };
 
 // ─── RATE PLANS ───────────────────────────────────────────
@@ -35,17 +88,8 @@ export const fetchRatePlans = async (roomTypeId) => {
     : `${BASE_URL}/rate-plans/`;
   const res = await fetch(url, { headers: getAuthHeaders() });
   if (!res.ok) throw new Error('Rate plans fetch failed');
-  return res.json();
-};
-
-// ─── AVAILABILITY ─────────────────────────────────────────
-export const fetchAvailability = async (roomTypeId, checkIn, checkOut) => {
-  let url = `${BASE_URL}/availability/?room_type=${roomTypeId}`;
-  if (checkIn) url += `&date__gte=${checkIn}`;
-  if (checkOut) url += `&date__lte=${checkOut}`;
-  const res = await fetch(url, { headers: getAuthHeaders() });
-  if (!res.ok) throw new Error('Availability fetch failed');
-  return res.json();
+  const data = await res.json();
+  return data.results || data;
 };
 
 // ─── BOOKINGS ─────────────────────────────────────────────
@@ -90,5 +134,6 @@ export const cancelBooking = async (bookingId) => {
 export const fetchMyBookings = async () => {
   const res = await fetch(`${BASE_URL}/bookings/`, { headers: getAuthHeaders() });
   if (!res.ok) throw new Error('Bookings fetch failed');
-  return res.json();
+  const data = await res.json();
+  return data.results || data;
 };

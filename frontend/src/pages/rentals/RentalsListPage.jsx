@@ -28,6 +28,11 @@ const RentalsListPage = () => {
   const { amenities } = useAmenities();
   const navigate = useNavigate();
 
+  const token = localStorage.getItem('access_token');
+  const userStr = localStorage.getItem('user');
+  const user = userStr ? JSON.parse(userStr) : null;
+  const isBusiness = user?.is_business || user?.user_type === 'business' || user?.is_owner;
+
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [sort, setSort] = useState('newest');
   const [viewMode, setViewMode] = useState('grid'); // grid | list
@@ -60,6 +65,26 @@ const RentalsListPage = () => {
           </div>
         </div>
       </header>
+
+      {/* Business Banner */}
+      {token && (
+        <div className="rlp-business-bar">
+          <div className="rlp-business-info">
+            <span>🏠 {isBusiness ? 'Business Account' : 'Partner with Yatrip'}</span>
+            <p>{isBusiness ? 'Manage your rentals' : 'Have a room to rent? List it today'}</p>
+          </div>
+          <div className="rlp-business-actions">
+            {isBusiness && (
+              <button className="rlp-biz-btn" onClick={() => navigate('/my-rentals')}>
+                My Rentals
+              </button>
+            )}
+            <button className="rlp-biz-btn primary" onClick={() => navigate('/register-rental')}>
+              {isBusiness ? '+ Register Rental' : 'List Your Property'}
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="rlp-layout">
         {/* Sidebar Filters */}
@@ -101,7 +126,7 @@ const RentalsListPage = () => {
           {/* Loading */}
           {loading && (
             <div className={`rlp-${viewMode}`}>
-              {[1,2,3,4,5,6].map((i) => <div key={i} className="rlp-skeleton" />)}
+              {[1, 2, 3, 4, 5, 6].map((i) => <div key={i} className="rlp-skeleton" />)}
             </div>
           )}
 

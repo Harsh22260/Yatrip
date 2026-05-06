@@ -4,26 +4,45 @@ import { sendMessage, clearChatSession } from '../services/chatbotService';
 const SESSION_KEY = 'yatrip_chat_session';
 
 export const useChat = () => {
-  const [messages, setMessages] = useState([
-    {
-      id: 'welcome',
-      role: 'assistant',
-      content: `Namaste! 🙏 Main **Yatrip AI Assistant** hoon.\n\nMujhse pooch sakte ho:\n- 🏨 Hotel recommendations\n- 🍽️ Local food & restaurants\n- 🏛️ Tourist attractions\n- 🚌 Transport options\n- 🏡 PG & rentals\n- ✈️ Trip planning advice\n\nKya jaanna chahte ho?`,
-      timestamp: new Date().toISOString(),
-      sources: [],
-    },
-  ]);
+  const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const sessionIdRef = useRef(localStorage.getItem(SESSION_KEY) || null);
 
-  const sendMsg = useCallback(async (text) => {
-    if (!text.trim() || loading) return;
+  const welcomeMsg = {
+    id: 'welcome',
+    role: 'assistant',
+    content: `Namaste! 🙏 Main **Yatrip AI Assistant** hoon.\n\nMujhse pooch sakte ho:\n- 🏨 Hotel recommendations\n- 🍽️ Local food & restaurants\n- 🏛️ Tourist attractions\n- 🚌 Transport options\n- 🏡 PG & rentals\n- ✈️ Trip planning advice\n\nKya jaanna chahte ho?`,
+    timestamp: new Date().toISOString(),
+    sources: [],
+  };
+
+  // Load history if session exists
+  const loadHistory = useCallback(async (sid) => {
+    setLoading(true);
+    try {
+      const data = await fetchChatHistory(sid);
+      if (data.messages && data.messages.length > 0) {
+        setMessages(data.messages);
+      } else {
+        setMessages([welcomeMsg]);
+      }
+    } catch (e) {
+      setMessages([welcomeMsg]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const sendMsg = useCallback(async (text, imageFile = null) => {
+    if (!text.trim() && !imageFile) return;
+    if (loading) return;
 
     const userMsg = {
       id: Date.now().toString(),
       role: 'user',
-      content: text.trim(),
+      content: text.trim() || (imageFile ? 'Analyzed Image' : ''),
+      image: imageFile ? URL.createObjectURL(imageFile) : null,
       timestamp: new Date().toISOString(),
     };
 
@@ -31,14 +50,12 @@ export const useChat = () => {
     setLoading(true);
     setError(null);
 
-    // Optimistic typing indicator
     const typingId = 'typing_' + Date.now();
     setMessages((prev) => [...prev, { id: typingId, role: 'typing' }]);
 
     try {
-      const res = await sendMessage(text.trim(), sessionIdRef.current);
+      const res = await sendMessage(text.trim(), sessionIdRef.current, imageFile);
 
-      // Save session id
       if (res.session_id) {
         sessionIdRef.current = res.session_id;
         localStorage.setItem(SESSION_KEY, res.session_id);
@@ -47,7 +64,7 @@ export const useChat = () => {
       const botMsg = {
         id: Date.now().toString() + '_bot',
         role: 'assistant',
-        content: res.reply || res.message || 'Sorry, koi response nahi mila.',
+        content: res.reply || 'Sorry, koi response nahi mila.',
         timestamp: new Date().toISOString(),
         sources: res.sources || [],
       };
@@ -72,15 +89,15 @@ export const useChat = () => {
     } catch (_) {}
     sessionIdRef.current = null;
     localStorage.removeItem(SESSION_KEY);
-    setMessages([{
-      id: 'welcome_new',
-      role: 'assistant',
-      content: `Chat clear ho gaya! 🔄 Kya naya poochna chahte ho?`,
-      timestamp: new Date().toISOString(),
-      sources: [],
-    }]);
+    setMessages([welcomeMsg]);
     setError(null);
   }, []);
 
-  return { messages, loading, error, sendMsg, clearChat };
+  const setSessionId = (sid) => {
+    sessionIdRef.current = sid;
+    localStorage.setItem(SESSION_KEY, sid);
+    loadHistory(sid);
+  };
+
+  return { messages, loading, error, sendMsg, clearChat, setSessionId, loadHistory };
 };

@@ -1,0 +1,125 @@
+.rap-page {
+  min-height: 100vh;
+  background: #fdfaf5;
+  padding: 40px 20px;
+  font-family: 'Inter', sans-serif;
+}
+
+.rap-container {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.rap-header {
+  margin-bottom: 30px;
+}
+
+.rap-back {
+  background: none;
+  border: none;
+  color: #ff6b35;
+  cursor: pointer;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.rap-header h1 {
+  font-size: 2rem;
+  color: #1a1a2e;
+  margin: 0 0 6px;
+}
+
+.rap-header p {
+  color: #7a7a9a;
+}
+
+.rap-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  border: 1px solid #e8e8f0;
+}
+
+.rap-section {
+  margin-bottom: 32px;
+}
+
+.rap-section h3 {
+  font-size: 1.1rem;
+  color: #1a1a2e;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #e8e8f0;
+  padding-bottom: 8px;
+}
+
+.rap-field {
+  margin-bottom: 20px;
+}
+
+.rap-field label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-bottom: 6px;
+}
+
+.rap-field input, .rap-field select, .rap-field textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1.5px solid #e8e8f0;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.rap-field input:focus {
+  border-color: #ff6b35;
+}
+
+.rap-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.rap-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+}
+
+.rap-submit-btn {
+  width: 100%;
+  padding: 16px;
+  background: #ff6b35;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.rap-submit-btn:hover {
+  background: #e55a28;
+}
+
+.success .rap-card {
+  text-align: center;
+  padding: 60px 40px;
+}
+
+.rap-success-icon {
+  font-size: 4rem;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 480px) {
+  .rap-row { grid-template-columns: 1fr; }
+}

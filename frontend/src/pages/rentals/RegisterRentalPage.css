@@ -1,0 +1,160 @@
+.rrp-page {
+  min-height: 100vh;
+  background: #f1f5f9;
+  padding: 40px 20px;
+  font-family: 'Inter', sans-serif;
+}
+
+.rrp-container {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.rrp-header {
+  margin-bottom: 30px;
+}
+
+.rrp-back {
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.rrp-header h1 {
+  font-size: 2rem;
+  color: #1e293b;
+  margin: 0 0 6px;
+}
+
+.rrp-header p {
+  color: #64748b;
+}
+
+.rrp-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+}
+
+.rrp-section {
+  margin-bottom: 32px;
+}
+
+.rrp-section h3 {
+  font-size: 1.1rem;
+  color: #334155;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 8px;
+}
+
+.rrp-field {
+  margin-bottom: 20px;
+}
+
+.rrp-field label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 6px;
+}
+
+.rrp-field input, .rrp-field select, .rrp-field textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.rrp-field input:focus {
+  border-color: #f59e0b;
+}
+
+.rrp-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.rrp-amenities-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.rrp-amenity-pill {
+  padding: 8px 16px;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 99px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.rrp-amenity-pill input {
+  display: none;
+}
+
+.rrp-amenity-pill.active {
+  background: #fffbeb;
+  border-color: #f59e0b;
+  color: #b45309;
+}
+
+.rrp-submit-btn {
+  width: 100%;
+  padding: 16px;
+  background: #f59e0b;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.rrp-submit-btn:hover {
+  background: #d97706;
+}
+
+.rrp-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.rrp-error {
+  background: #fef2f2;
+  color: #dc2626;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.success .rrp-card {
+  text-align: center;
+  padding: 60px 40px;
+}
+
+.rrp-success-icon {
+  font-size: 4rem;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 480px) {
+  .rrp-row { grid-template-columns: 1fr; }
+}

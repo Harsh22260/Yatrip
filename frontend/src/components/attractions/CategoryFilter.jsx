@@ -1,27 +1,31 @@
-import React from 'react';
-import { CATEGORIES, getCategoryMeta } from '../../utils/attractionHelpers';
-import './CategoryFilter.css';
+import "./CategoryFilter.css";
+import { CATEGORIES } from "../../utils/attractionHelpers";
 
-const CategoryFilter = ({ selected, onChange }) => {
+export default function CategoryFilter({ activeCategory, onChange, categoryCounts = {} }) {
   return (
-    <div className="cf-wrap">
-      {CATEGORIES.map((cat) => {
-        const { icon, label } = cat === 'all'
-          ? { icon: '🗺️', label: 'All' }
-          : getCategoryMeta(cat);
-        return (
-          <button
-            key={cat}
-            className={`cf-btn ${selected === cat ? 'active' : ''}`}
-            onClick={() => onChange(cat)}
-          >
-            <span className="cf-icon">{icon}</span>
-            <span className="cf-label">{label}</span>
-          </button>
-        );
-      })}
+    <div className="category-filter">
+      <div className="category-scroll">
+        {CATEGORIES.map((cat) => {
+          const count = cat.key === "all"
+            ? Object.values(categoryCounts).reduce((a, b) => a + b, 0)
+            : categoryCounts[cat.key];
+
+          return (
+            <button
+              key={cat.key}
+              className={`cat-pill ${activeCategory === cat.key ? "active" : ""}`}
+              onClick={() => onChange(cat.key)}
+              aria-pressed={activeCategory === cat.key}
+            >
+              <span className="cat-pill__icon">{cat.icon}</span>
+              <span className="cat-pill__label">{cat.label}</span>
+              {count != null && count > 0 && (
+                <span className="cat-pill__count">{count > 999 ? "999+" : count}</span>
+              )}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
-};
-
-export default CategoryFilter;
+}

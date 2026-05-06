@@ -6,40 +6,42 @@ from datetime import timedelta, date
 from decimal import Decimal
 import secrets
 
-from .models import (
-    Hotel,
-    RoomType,
-    RoomUnit,
-    RatePlan,
-    Availability,
-    Booking
-)
+from .models import Hotel, RoomType, RoomUnit, RatePlan, Availability, Booking
 from .serializers import (
-    HotelSerializer,
-    RoomTypeSerializer,
-    RoomUnitSerializer,
-    RatePlanSerializer,
-    AvailabilitySerializer,
-    BookingSerializer
+    HotelSerializer, RoomTypeSerializer, RoomUnitSerializer,
+    RatePlanSerializer, AvailabilitySerializer, BookingSerializer
 )
 
 
-# -----------------------------
-# 🏨 HOTEL VIEWSET
-# -----------------------------
 class HotelViewSet(viewsets.ModelViewSet):
-    queryset = Hotel.objects.all()
     serializer_class = HotelSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
+    def get_queryset(self):
+        queryset = Hotel.objects.all()
+        # ?mine=true — sirf apne hotels
+        if self.request.query_params.get('mine') == 'true':
+            if self.request.user.is_authenticated:
+                queryset = queryset.filter(owner=self.request.user)
+            else:
+                queryset = queryset.none()
+        return queryset
 
-# -----------------------------
-# 🛏 ROOM & RATE PLAN VIEWSETS
-# -----------------------------
+    def perform_create(self, serializer):
+        # owner automatically logged-in user set hoga
+        serializer.save(owner=self.request.user)
+
+
 class RoomTypeViewSet(viewsets.ModelViewSet):
-    queryset = RoomType.objects.all()
     serializer_class = RoomTypeSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        queryset = RoomType.objects.all()
+        hotel_id = self.request.query_params.get('hotel')
+        if hotel_id:
+            queryset = queryset.filter(hotel_id=hotel_id)
+        return queryset
 
 
 class RoomUnitViewSet(viewsets.ModelViewSet):
@@ -49,41 +51,44 @@ class RoomUnitViewSet(viewsets.ModelViewSet):
 
 
 class RatePlanViewSet(viewsets.ModelViewSet):
-    queryset = RatePlan.objects.all()
     serializer_class = RatePlanSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
+    def get_queryset(self):
+        queryset = RatePlan.objects.all()
+        room_type_id = self.request.query_params.get('room_type')
+        if room_type_id:
+            queryset = queryset.filter(room_type_id=room_type_id)
+        return queryset
 
-# -----------------------------
-# 📅 AVAILABILITY VIEWSET
-# -----------------------------
+
 class AvailabilityViewSet(viewsets.ModelViewSet):
-    queryset = Availability.objects.all()
     serializer_class = AvailabilitySerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
+    def get_queryset(self):
+        queryset = Availability.objects.all()
+        room_type_id = self.request.query_params.get('room_type')
+        date_gte = self.request.query_params.get('date__gte')
+        date_lte = self.request.query_params.get('date__lte')
+        if room_type_id:
+            queryset = queryset.filter(room_type_id=room_type_id)
+        if date_gte:
+            queryset = queryset.filter(date__gte=date_gte)
+        if date_lte:
+            queryset = queryset.filter(date__lte=date_lte)
+        return queryset
 
-# -----------------------------
-# 📘 BOOKING VIEWSET
-# -----------------------------
+
 class BookingViewSet(viewsets.ModelViewSet):
-    queryset = Booking.objects.all().order_by('-created_at')
     serializer_class = BookingSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    def get_queryset(self):
+        # Sirf apni bookings
+        return Booking.objects.filter(user=self.request.user).order_by('-created_at')
+
     def create(self, request, *args, **kwargs):
-        """
-        Create a HOLD booking (temporary reservation for ~10–15 min).
-        Expected JSON:
-        {
-            "hotel": <hotel_id>,
-            "room_type": <room_type_id>,
-            "room_unit": <room_unit_id or null>,
-            "rate_plan": <rate_plan_id or null>,
-            "check_in": "YYYY-MM-DD",
-            "check_out": "YYYY-MM-DD"
-        }
-        """
         user = request.user
         data = request.data
 
@@ -108,7 +113,6 @@ class BookingViewSet(viewsets.ModelViewSet):
             except RatePlan.DoesNotExist:
                 return Response({"error": "Invalid rate_plan"}, status=400)
 
-        # Parse dates
         try:
             check_in = date.fromisoformat(data.get("check_in"))
             check_out = date.fromisoformat(data.get("check_out"))
@@ -119,13 +123,10 @@ class BookingViewSet(viewsets.ModelViewSet):
             return Response({"error": "check_out must be after check_in"}, status=400)
 
         nights = (check_out - check_in).days
-        base_price = room_type.base_price
-        total_price = Decimal(base_price) * nights
-
+        total_price = Decimal(room_type.base_price) * nights
         if rate_plan:
             total_price = total_price * Decimal(rate_plan.price_multiplier)
 
-        # Create hold booking
         hold_token = secrets.token_urlsafe(16)
         hold_expires = timezone.now() + timedelta(minutes=10)
 
@@ -147,23 +148,16 @@ class BookingViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(booking)
         return Response(
             {
-                "message": "Booking created and held for 10 minutes",
+                "message": "Booking held for 10 minutes",
                 "hold_token": hold_token,
                 "expires_at": hold_expires,
-                "booking": serializer.data
+                "booking": serializer.data,
             },
             status=status.HTTP_201_CREATED
         )
 
-    # -----------------------------
-    # ✅ Confirm Booking
-    # -----------------------------
     @action(detail=True, methods=['post'])
     def confirm(self, request, pk=None):
-        """
-        Confirm a held booking (after payment or approval)
-        Required JSON: { "hold_token": "..." }
-        """
         booking = self.get_object()
         token = request.data.get("hold_token")
 
@@ -187,14 +181,8 @@ class BookingViewSet(viewsets.ModelViewSet):
             status=200
         )
 
-    # -----------------------------
-    # ❌ Cancel Booking
-    # -----------------------------
     @action(detail=True, methods=['post'])
     def cancel(self, request, pk=None):
-        """
-        Cancel a booking (if refundable or before hold expires)
-        """
         booking = self.get_object()
         if booking.status not in ["HELD", "CONFIRMED"]:
             return Response({"error": "Only held or confirmed bookings can be cancelled."}, status=400)

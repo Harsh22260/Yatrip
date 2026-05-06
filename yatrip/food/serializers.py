@@ -1,34 +1,50 @@
 from rest_framework import serializers
-from .models import FoodVendor, FoodImage, MenuItem, FoodCategory
-
-class FoodImageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = FoodImage
-        fields = ['id', 'image', 'uploaded_at']
+from .models import FoodPlace
 
 
-class MenuItemSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = MenuItem
-        fields = ['id', 'name', 'description', 'price', 'is_available', 'image']
-
-
-class FoodCategorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = FoodCategory
-        fields = ['id', 'name', 'description']
-
-
-class FoodVendorSerializer(serializers.ModelSerializer):
-    owner_email = serializers.EmailField(source='owner.email', read_only=True)
-    images = FoodImageSerializer(many=True, read_only=True)
-    menu_items = MenuItemSerializer(many=True, read_only=True)
-    category_name = serializers.CharField(source='category.name', read_only=True)
+class FoodPlaceListSerializer(serializers.ModelSerializer):
+    distance_km     = serializers.SerializerMethodField()
+    category_display = serializers.SerializerMethodField()
+    price_display   = serializers.SerializerMethodField()
 
     class Meta:
-        model = FoodVendor
+        model  = FoodPlace
         fields = [
-            'id', 'owner_email', 'name', 'vendor_type', 'description',
-            'address', 'location', 'avg_cost', 'rating', 'is_verified',
-            'created_at', 'category', 'category_name', 'images', 'menu_items'
+            'id', 'name', 'category', 'category_display', 'cuisine',
+            'latitude', 'longitude', 'city', 'state',
+            'rating', 'review_count', 'price_level', 'price_display',
+            'image_url', 'is_veg', 'is_open_now',
+            'home_delivery', 'takeaway', 'distance_km',
+        ]
+
+    def get_distance_km(self, obj):
+        req = self.context.get('request')
+        if req:
+            try:
+                lat = float(req.query_params.get('lat', 0))
+                lon = float(req.query_params.get('lon', 0))
+                if lat and lon:
+                    return round(obj.distance_from(lat, lon), 1)
+            except (ValueError, TypeError):
+                pass
+        return None
+
+    def get_category_display(self, obj):
+        icons = {
+            'street_food': '🥘', 'restaurant': '🍽️', 'cafe': '☕',
+            'dhaba': '🍛', 'bakery': '🥐', 'sweet_shop': '🍬',
+            'juice_bar': '🥤', 'fast_food': '🍔', 'other': '🍴',
+        }
+        return f"{icons.get(obj.category,'🍴')} {obj.get_category_display()}"
+
+    def get_price_display(self, obj):
+        return '₹' * obj.price_level
+
+
+class FoodPlaceDetailSerializer(FoodPlaceListSerializer):
+    class Meta(FoodPlaceListSerializer.Meta):
+        fields = FoodPlaceListSerializer.Meta.fields + [
+            'description', 'address', 'country', 'website', 'phone',
+            'opening_hours', 'avg_cost_for_two', 'outdoor_seating',
+            'osm_id', 'created_at',
         ]

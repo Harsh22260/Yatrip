@@ -1,74 +1,95 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   MENU ITEM CARD - PREMIUM DESIGN
+   ══════════════════════════════════════════════════════════════════════════ */
+
 .mic-card {
   display: flex;
-  gap: 14px;
-  padding: 14px;
-  background: #fff;
-  border-radius: 12px;
-  border: 1px solid #fef3c7;
-  transition: box-shadow 0.2s;
+  gap: 16px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(12px);
 }
 
-.mic-card:hover { box-shadow: 0 3px 14px rgba(0,0,0,0.07); }
+.mic-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(245, 158, 11, 0.3);
+  transform: scale(1.02);
+  box-shadow: 0 10px 25px -10px rgba(0,0,0,0.5);
+}
 
-.mic-card.unavailable { opacity: 0.5; }
+.mic-card.unavailable {
+  opacity: 0.4;
+  filter: grayscale(1);
+}
 
 .mic-left { flex-shrink: 0; }
 
 .mic-image {
-  width: 72px;
-  height: 72px;
-  border-radius: 10px;
+  width: 90px;
+  height: 90px;
+  border-radius: 16px;
   object-fit: cover;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
 .mic-placeholder {
-  width: 72px;
-  height: 72px;
-  border-radius: 10px;
-  background: #fef3c7;
+  width: 90px;
+  height: 90px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.8rem;
+  font-size: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.mic-body { flex: 1; min-width: 0; }
+.mic-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 
 .mic-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .mic-name {
-  font-family: 'DM Sans', sans-serif;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #1c1917;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
   margin: 0;
+  letter-spacing: -0.01em;
 }
 
 .mic-unavail {
   font-size: 0.7rem;
-  background: #F8D7DA;
-  color: #842029;
-  padding: 2px 8px;
-  border-radius: 6px;
-  flex-shrink: 0;
+  font-weight: 700;
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  padding: 4px 10px;
+  border-radius: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .mic-desc {
-  font-size: 0.8rem;
-  color: #78716c;
-  margin: 0 0 8px;
-  line-height: 1.45;
+  font-size: 0.85rem;
+  color: #94a3b8;
+  margin: 0 0 10px;
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .mic-price {
-  font-family: 'Playfair Display', serif;
-  font-size: 1rem;
-  font-weight: 700;
-  color: #d97706;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #f59e0b;
+  margin-top: auto;
 }

@@ -1,0 +1,257 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@400;500;600&display=swap');
+
+.mhp-page {
+  min-height: 100vh;
+  background: #f5f0ea;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.mhp-header {
+  background: linear-gradient(135deg, #0f3460, #1a5276);
+  padding: 40px 24px 32px;
+}
+
+.mhp-header-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.mhp-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 2rem;
+  color: #f5e8d0;
+  margin: 0 0 4px;
+}
+
+.mhp-sub {
+  color: #a8c8e8;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.mhp-add-btn {
+  background: #b5420a;
+  color: #fff;
+  border: none;
+  padding: 11px 22px;
+  border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.mhp-add-btn:hover {
+  background: #d4691e;
+  transform: translateY(-1px);
+}
+
+.mhp-body {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+
+.mhp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+/* Card */
+.mhp-card {
+  background: #fff;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid #e8e0d6;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.mhp-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.12);
+}
+
+.mhp-card-img {
+  height: 140px;
+  background: linear-gradient(135deg, #1a5276, #2e86c1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+  position: relative;
+}
+
+.mhp-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.mhp-badge.verified { background: #1a6b3c; color: #fff; }
+.mhp-badge.pending { background: #856404; color: #fff; }
+
+.mhp-card-body { padding: 20px; }
+
+.mhp-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 6px;
+}
+
+.mhp-hotel-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  color: #1a1209;
+  margin: 0;
+}
+
+.mhp-rating {
+  color: #d4a017;
+  font-size: 0.88rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.mhp-address {
+  font-size: 0.82rem;
+  color: #7a6e62;
+  margin: 0 0 16px;
+}
+
+/* Stats */
+.mhp-stats {
+  display: flex;
+  gap: 0;
+  background: #faf8f5;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 16px;
+  border: 1px solid #f0ece6;
+}
+
+.mhp-stat {
+  flex: 1;
+  padding: 12px 8px;
+  text-align: center;
+  border-right: 1px solid #f0ece6;
+}
+
+.mhp-stat:last-child { border-right: none; }
+
+.mhp-stat-val {
+  display: block;
+  font-family: 'Playfair Display', serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a1209;
+}
+
+.mhp-stat-label {
+  display: block;
+  font-size: 0.7rem;
+  color: #9a8f83;
+  margin-top: 2px;
+}
+
+/* Actions */
+.mhp-card-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.mhp-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 9px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.mhp-btn.primary {
+  background: linear-gradient(135deg, #b5420a, #d4691e);
+  color: #fff;
+}
+
+.mhp-btn.primary:hover { opacity: 0.9; transform: translateY(-1px); }
+
+.mhp-btn.secondary {
+  background: #f0ece6;
+  color: #5a5048;
+}
+
+.mhp-btn.secondary:hover { background: #e0d9d0; }
+
+/* States */
+.mhp-loading {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.mhp-skeleton {
+  height: 300px;
+  border-radius: 18px;
+  background: linear-gradient(90deg, #e8e0d6 25%, #f5f0ea 50%, #e8e0d6 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0 }
+  100% { background-position: -200% 0 }
+}
+
+.mhp-empty {
+  text-align: center;
+  padding: 80px 24px;
+}
+
+.mhp-empty-icon { font-size: 4rem; margin-bottom: 16px; }
+
+.mhp-empty h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.5rem;
+  color: #1a1209;
+  margin: 0 0 8px;
+}
+
+.mhp-empty p {
+  color: #7a6e62;
+  margin: 0 0 24px;
+  font-size: 0.95rem;
+}
+
+.mhp-error {
+  text-align: center;
+  padding: 48px;
+  color: #842029;
+}
+
+.mhp-error button {
+  margin-top: 12px;
+  background: #b5420a;
+  color: #fff;
+  border: none;
+  padding: 9px 22px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+}

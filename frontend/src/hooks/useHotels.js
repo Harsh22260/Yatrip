@@ -4,11 +4,10 @@ import {
   fetchHotelById,
   fetchRoomTypes,
   fetchRatePlans,
-  fetchAvailability,
   fetchMyBookings,
+  fetchMyHotels,
 } from '../services/hotelService';
 
-// ─── useHotels ────────────────────────────────────────────
 export const useHotels = () => {
   const [hotels, setHotels] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,7 +18,7 @@ export const useHotels = () => {
     setError(null);
     try {
       const data = await fetchHotels();
-      setHotels(data.results || data);
+      setHotels(Array.isArray(data) ? data : []);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -28,11 +27,9 @@ export const useHotels = () => {
   }, []);
 
   useEffect(() => { load(); }, [load]);
-
   return { hotels, loading, error, refetch: load };
 };
 
-// ─── useHotelDetail ───────────────────────────────────────
 export const useHotelDetail = (hotelId) => {
   const [hotel, setHotel] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -51,7 +48,6 @@ export const useHotelDetail = (hotelId) => {
   return { hotel, loading, error };
 };
 
-// ─── useRoomTypes ─────────────────────────────────────────
 export const useRoomTypes = (hotelId) => {
   const [roomTypes, setRoomTypes] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -61,7 +57,7 @@ export const useRoomTypes = (hotelId) => {
     if (!hotelId) return;
     setLoading(true);
     fetchRoomTypes(hotelId)
-      .then((data) => setRoomTypes(data.results || data))
+      .then(data => setRoomTypes(Array.isArray(data) ? data : []))
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [hotelId]);
@@ -69,7 +65,6 @@ export const useRoomTypes = (hotelId) => {
   return { roomTypes, loading, error };
 };
 
-// ─── useRatePlans ─────────────────────────────────────────
 export const useRatePlans = (roomTypeId) => {
   const [ratePlans, setRatePlans] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -78,7 +73,7 @@ export const useRatePlans = (roomTypeId) => {
     if (!roomTypeId) return;
     setLoading(true);
     fetchRatePlans(roomTypeId)
-      .then((data) => setRatePlans(data.results || data))
+      .then(data => setRatePlans(Array.isArray(data) ? data : []))
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [roomTypeId]);
@@ -86,24 +81,6 @@ export const useRatePlans = (roomTypeId) => {
   return { ratePlans, loading };
 };
 
-// ─── useAvailability ──────────────────────────────────────
-export const useAvailability = (roomTypeId, checkIn, checkOut) => {
-  const [availability, setAvailability] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (!roomTypeId || !checkIn || !checkOut) return;
-    setLoading(true);
-    fetchAvailability(roomTypeId, checkIn, checkOut)
-      .then((data) => setAvailability(data.results || data))
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, [roomTypeId, checkIn, checkOut]);
-
-  return { availability, loading };
-};
-
-// ─── useMyBookings ────────────────────────────────────────
 export const useMyBookings = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -113,7 +90,7 @@ export const useMyBookings = () => {
     setLoading(true);
     try {
       const data = await fetchMyBookings();
-      setBookings(data.results || data);
+      setBookings(Array.isArray(data) ? data : []);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -122,6 +99,28 @@ export const useMyBookings = () => {
   }, []);
 
   useEffect(() => { load(); }, [load]);
-
   return { bookings, loading, error, refetch: load };
+};
+
+// ─── Business Hook ─────────────────────────────────────────
+export const useMyHotels = () => {
+  const [hotels, setHotels] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await fetchMyHotels();
+      setHotels(Array.isArray(data) ? data : []);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+  return { hotels, loading, error, refetch: load };
 };

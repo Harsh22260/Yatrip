@@ -30,6 +30,12 @@ const ChatMessage = ({ message }) => {
           className="cm-bubble"
           dangerouslySetInnerHTML={{ __html: parseMarkdown(message.content) }}
         />
+        
+        {message.image_url && (
+          <div className="cm-image-wrap">
+            <img src={message.image_url} alt="User upload" onClick={() => window.open(message.image_url, '_blank')} />
+          </div>
+        )}
 
         {/* Sources from RAG */}
         {message.sources?.length > 0 && (
