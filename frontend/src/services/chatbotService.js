@@ -1,58 +1,48 @@
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+import { asList, request } from './api';
 
-const getAuthHeaders = () => ({
-  'Content-Type': 'application/json',
-  Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-});
+const CHATBOT = 'chatbot';
 
-// ─── Send message to backend (Gemini + RAG + LangChain) ──
-export const sendMessage = async (message, sessionId = null, imageFile = null) => {
+/**
+ * Anonymous sessions are protected by a secret `access_key`, not by the JWT.
+ * A logged-in visitor is identified by their session id, but the key is still
+ * required for anonymous history/clear calls, so it is sent whenever we have
+ * one. Without it the backend answers 403 on every history call.
+ */
+const sessionQuery = (sessionId, accessKey) => {
+  const params = new URLSearchParams();
+  if (sessionId) params.set('session_id', sessionId);
+  if (accessKey) params.set('access_key', accessKey);
+  const query = params.toString();
+  return query ? `?${query}` : '';
+};
+
+// ─── Send message to backend (multi-model chain + RAG + LangGraph) ──
+export const sendMessage = async (message, sessionId = null, imageFile = null, accessKey = null) => {
   const formData = new FormData();
-  formData.append('message', message);
+  formData.append('message', message ?? '');
   if (sessionId) formData.append('session_id', sessionId);
+  if (accessKey) formData.append('access_key', accessKey);
   if (imageFile) formData.append('image', imageFile);
 
-  const res = await fetch(`${BASE_URL}/chatbot/chat/`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-      // 'Content-Type': 'multipart/form-data' is handled automatically by fetch with FormData
-    },
-    body: formData,
-  });
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.error || 'Chat failed');
-  }
-  return res.json();
+  // json:false so the helper does not force a Content-Type on FormData.
+  return request(`${CHATBOT}/chat/`, { method: 'POST', body: formData, json: false });
 };
 
-// ─── Fetch chat history ───────────────────────────────────
-export const fetchChatHistory = async (sessionId) => {
-  const res = await fetch(
-    `${BASE_URL}/chatbot/history/?session_id=${sessionId}`,
-    { headers: getAuthHeaders() }
-  );
-  if (!res.ok) throw new Error('History fetch failed');
-  return res.json();
+// ─── Fetch chat history ─────────────────────────────────────────
+export const fetchChatHistory = async (sessionId, accessKey = null) => {
+  const data = await request(`${CHATBOT}/history/${sessionQuery(sessionId, accessKey)}`);
+  if (Array.isArray(data)) return { messages: data, sessions: data };
+  return { messages: data?.messages ?? [], ...data };
 };
 
-// ─── Fetch All Sessions ───────────────────────────────────
-export const fetchSessionsList = async () => {
-  const res = await fetch(`${BASE_URL}/chatbot/sessions/`, {
-    headers: getAuthHeaders(),
-  });
-  if (!res.ok) throw new Error('Sessions fetch failed');
-  return res.json();
-};
+// ─── Fetch session list ────────────────────────────────────────
+export const fetchSessionsList = async () =>
+  asList(await request(`${CHATBOT}/sessions/`));
 
-// ─── Clear session ────────────────────────────────────────
-export const clearChatSession = async (sessionId) => {
-  const res = await fetch(`${BASE_URL}/chatbot/clear/`, {
-    method: 'POST',
-    headers: getAuthHeaders(),
-    body: JSON.stringify({ session_id: sessionId }),
-  });
-  if (!res.ok) throw new Error('Clear failed');
-  return res.json();
+// ─── Clear a session's history ───────────────────────────────
+export const clearChatSession = async (sessionId, accessKey = null) => {
+  const params = {};
+  if (sessionId) params.session_id = sessionId;
+  if (accessKey) params.access_key = accessKey;
+  return request(`${CHATBOT}/clear/`, { method: 'POST', body: params });
 };

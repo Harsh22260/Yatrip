@@ -8,7 +8,7 @@ import './ChatbotPage.css';
 
 const ChatbotPage = () => {
   const { messages, loading, error, sendMsg, clearChat, setSessionId, loadHistory } = useChat();
-  const bottomRef = useRef(null);
+  const messagesRef = useRef(null);
   const [showSuggestions, setShowSuggestions] = useState(true);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [sessions, setSessions] = useState([]);
@@ -30,9 +30,16 @@ const ChatbotPage = () => {
     } catch (e) { console.error(e); }
   };
 
+  /* Scroll the transcript itself instead of calling scrollIntoView() on the
+     marker div. scrollIntoView walks up and scrolls EVERY scrollable ancestor,
+     including the document -- so on load it yanked the whole window down ~540px
+     and took the fixed navbar off screen. Targeting the container keeps the
+     scroll local, which is also what keeps the bar pinned. */
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    const el = messagesRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+  }, [messages, loading]);
 
   useEffect(() => {
     const hasUserMsg = messages.some((m) => m.role === 'user');
@@ -127,7 +134,7 @@ const ChatbotPage = () => {
         )}
 
         {/* Messages area */}
-        <div className="cbp-messages">
+        <div className="cbp-messages" ref={messagesRef}>
           <div className="cbp-messages-inner">
             {messages.length === 0 && !loading && (
               <div className="cbp-welcome-screen">
@@ -139,7 +146,6 @@ const ChatbotPage = () => {
             {messages.map((msg) => (
               <ChatMessage key={msg.id || Math.random()} message={msg} />
             ))}
-            <div ref={bottomRef} />
           </div>
         </div>
 

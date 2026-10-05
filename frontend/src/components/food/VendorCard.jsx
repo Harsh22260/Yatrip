@@ -1,4 +1,3 @@
-import React from 'react';
 import { getVendorTypeMeta, formatPrice, getPriceBucket, renderStars } from '../../utils/foodHelpers';
 import './VendorCard.css';
 

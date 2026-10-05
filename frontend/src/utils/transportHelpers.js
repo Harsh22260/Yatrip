@@ -1,24 +1,32 @@
 // ─── Node Type Meta ───────────────────────────────────────
+// Kept in sync with transport.models.TransportNode.NodeType on the backend.
 export const NODE_TYPE_META = {
-  bus:   { label: 'Bus Stand',      icon: '🚌', color: '#16a34a', markerColor: '#16a34a' },
-  auto:  { label: 'Auto Stand',     icon: '🛺', color: '#d97706', markerColor: '#d97706' },
-  metro: { label: 'Metro Station',  icon: '🚇', color: '#7c3aed', markerColor: '#7c3aed' },
-  taxi:  { label: 'Taxi Stand',     icon: '🚕', color: '#dc2626', markerColor: '#dc2626' },
+  bus:     { label: 'Bus Stand',          icon: '🚌', color: '#16a34a', markerColor: '#16a34a' },
+  auto:    { label: 'Auto Stand',         icon: '🛺', color: '#d97706', markerColor: '#d97706' },
+  metro:   { label: 'Metro Station',      icon: '🚇', color: '#7c3aed', markerColor: '#7c3aed' },
+  taxi:    { label: 'Taxi Stand',         icon: '🚕', color: '#dc2626', markerColor: '#dc2626' },
+  rail:    { label: 'Railway Station',    icon: '🚆', color: '#0891b2', markerColor: '#0891b2' },
+  airport: { label: 'Airport',            icon: '✈️', color: '#475569', markerColor: '#475569' },
+  ferry:   { label: 'Ferry Terminal',     icon: '⛴️', color: '#0ea5e9', markerColor: '#0ea5e9' },
+  other:   { label: 'Other Stop',         icon: '📍', color: '#6b7280', markerColor: '#6b7280' },
 };
 
 export const getNodeTypeMeta = (type) =>
   NODE_TYPE_META[type] || { label: type, icon: '📍', color: '#6b7280', markerColor: '#6b7280' };
 
-export const ALL_NODE_TYPES = ['all', 'bus', 'auto', 'metro', 'taxi'];
+export const ALL_NODE_TYPES = [
+  'all', 'bus', 'auto', 'metro', 'rail', 'airport', 'taxi', 'ferry', 'other',
+];
 
 // ─── Filter ───────────────────────────────────────────────
 export const filterNodes = (nodes, { search, type, city }) => {
   return nodes.filter((n) => {
     const matchSearch = !search ||
-      n.name.toLowerCase().includes(search.toLowerCase()) ||
-      (n.address || '').toLowerCase().includes(search.toLowerCase());
+      (n.name || '').toLowerCase().includes(search.toLowerCase()) ||
+      (n.address || '').toLowerCase().includes(search.toLowerCase()) ||
+      (n.operator || '').toLowerCase().includes(search.toLowerCase());
     const matchType = !type || type === 'all' || n.node_type === type;
-    const matchCity = !city || n.city.toLowerCase().includes(city.toLowerCase());
+    const matchCity = !city || (n.city || '').toLowerCase().includes(city.toLowerCase());
     return matchSearch && matchType && matchCity;
   });
 };

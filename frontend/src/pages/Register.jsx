@@ -14,10 +14,11 @@ export default function Register() {
     confirmPassword: "",
     phone: "",
     is_owner: false,
-    // owner fields
+    // owner fields - `business_address` is the name the API expects,
+    // not `address`, so a mismatch here silently dropped the value.
     business_name: "",
     business_type: "hotel",
-    address: "",
+    business_address: "",
     contact_number: "",
   });
   const [error, setError] = useState("");
@@ -34,8 +35,21 @@ export default function Register() {
       return "Please fill all required fields.";
     if (form.password !== form.confirmPassword)
       return "Passwords do not match.";
-    if (form.password.length < 6)
-      return "Password must be at least 6 characters.";
+    // Keep in step with the backend: min_length=8 on the serializer plus
+    // Django's AUTH_PASSWORD_VALIDATORS. The old "at least 6 characters"
+    // message let people fill the form and then fail server-side.
+    if (form.password.length < 8)
+      return "Password must be at least 8 characters.";
+    return null;
+  };
+
+  const validateStep1 = () => {
+    if (!form.phone.trim()) return "Please enter your phone number.";
+    if (form.is_owner) {
+      if (!form.business_name.trim()) return "Business name is required.";
+      if (!form.business_address.trim()) return "Business address is required.";
+      if (!form.contact_number.trim()) return "Contact number is required.";
+    }
     return null;
   };
 
@@ -44,26 +58,42 @@ export default function Register() {
       const err = validateStep0();
       if (err) { setError(err); return; }
     }
+    if (step === 1) {
+      const err = validateStep1();
+      if (err) { setError(err); return; }
+    }
     setError("");
     setStep((s) => s + 1);
   };
 
   const handleSubmit = async () => {
+    const stepError = validateStep1();
+    if (stepError) { setError(stepError); return; }
+
     setError("");
     setLoading(true);
     try {
       const payload = {
-        email: form.email,
-        username: form.username,
+        email: form.email.trim(),
+        username: form.username.trim(),
         password: form.password,
-        phone: form.phone,
+        phone: form.phone.trim(),
         is_owner: form.is_owner,
       };
+      // The owner fields were collected by the form but never sent, so the
+      // backend created a user with no OwnerProfile and the owner page 500'd.
+      if (form.is_owner) {
+        payload.business_name = form.business_name.trim();
+        payload.business_type = form.business_type;
+        payload.business_address = form.business_address.trim();
+        payload.contact_number = form.contact_number.trim();
+      }
       await registerUser(payload);
       setStep(2); // Done step
     } catch (err) {
-      const msgs = Object.values(err || {}).flat().join(" ");
-      setError(msgs || "Registration failed. Please try again.");
+      // api.js throws an Error carrying a readable message built from the
+      // DRF body; the old Object.values(err) walk printed raw JSON.
+      setError(err?.message || "Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -131,7 +161,7 @@ export default function Register() {
                 <span className="field-icon">🔒</span>
                 <input type={showPass ? "text" : "password"} name="password"
                   value={form.password} onChange={handleChange}
-                  placeholder="Min 6 characters" required className="field-input" />
+                  placeholder="Min 8 characters" required className="field-input" />
                 <button type="button" className="eye-btn"
                   onClick={() => setShowPass(!showPass)}>
                   {showPass ? "🙈" : "👁"}
@@ -221,7 +251,7 @@ export default function Register() {
                   <label className="field-label">Address *</label>
                   <div className="field-wrap">
                     <span className="field-icon">📍</span>
-                    <textarea name="address" value={form.address}
+                    <textarea name="business_address" value={form.business_address}
                       onChange={handleChange} placeholder="Business address"
                       className="field-input field-textarea" rows={2} />
                   </div>

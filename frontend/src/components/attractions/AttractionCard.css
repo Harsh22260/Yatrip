@@ -78,7 +78,7 @@
 
 .ac-badge--cat {
   background: rgba(255, 255, 255, 0.88);
-  color: #1A1A2E;
+  color: var(--text);
 }
 
 .ac-badge--dist {

@@ -1,103 +1,181 @@
-import { useState, useCallback, useRef } from 'react';
-import { sendMessage, clearChatSession } from '../services/chatbotService';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { clearChatSession, fetchChatHistory, sendMessage } from '../services/chatbotService';
 
 const SESSION_KEY = 'yatrip_chat_session';
+const ACCESS_KEY = 'yatrip_chat_access_key';
+
+const readStored = (key) => {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+};
+
+const WELCOME = `Namaste! 🙏 Main **Yatrip AI Assistant** hoon.
+
+Mujhse pooch sakte ho:
+- 🏨 Hotel recommendations
+- 🍽️ Local food & restaurants
+- 🏛️ Tourist attractions
+- 🚌 Transport options
+- 🏡 PG & rentals
+- ✈️ Trip planning advice
+
+Kya jaanna chahte ho?`;
+
+const welcomeMsg = () => ({
+  id: 'welcome',
+  role: 'assistant',
+  content: WELCOME,
+  timestamp: new Date().toISOString(),
+  sources: [],
+});
 
 export const useChat = () => {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const sessionIdRef = useRef(localStorage.getItem(SESSION_KEY) || null);
+  const [sessionId, setSessionIdState] = useState(() => readStored(SESSION_KEY));
+  const [accessKey, setAccessKeyState] = useState(() => readStored(ACCESS_KEY));
 
-  const welcomeMsg = {
-    id: 'welcome',
-    role: 'assistant',
-    content: `Namaste! 🙏 Main **Yatrip AI Assistant** hoon.\n\nMujhse pooch sakte ho:\n- 🏨 Hotel recommendations\n- 🍽️ Local food & restaurants\n- 🏛️ Tourist attractions\n- 🚌 Transport options\n- 🏡 PG & rentals\n- ✈️ Trip planning advice\n\nKya jaanna chahte ho?`,
-    timestamp: new Date().toISOString(),
-    sources: [],
-  };
+  // A ref keeps the access key readable inside callbacks without making them
+  // re-create on every render.
+  const accessKeyRef = useRef(accessKey);
+  const sessionIdRef = useRef(sessionId);
+  accessKeyRef.current = accessKey;
+  sessionIdRef.current = sessionId;
 
-  // Load history if session exists
-  const loadHistory = useCallback(async (sid) => {
+  useEffect(() => {
+    setMessages([welcomeMsg()]);
+  }, []);
+
+  const loadHistory = useCallback(async (sid = sessionIdRef.current, key = accessKeyRef.current) => {
+    if (!sid) return;
     setLoading(true);
     try {
-      const data = await fetchChatHistory(sid);
-      if (data.messages && data.messages.length > 0) {
+      const data = await fetchChatHistory(sid, key);
+      if (data.messages?.length) {
         setMessages(data.messages);
       } else {
-        setMessages([welcomeMsg]);
+        setMessages([welcomeMsg()]);
       }
-    } catch (e) {
-      setMessages([welcomeMsg]);
+    } catch {
+      // A missing/expired session is not worth shouting about; start fresh.
+      setMessages([welcomeMsg()]);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  const sendMsg = useCallback(async (text, imageFile = null) => {
-    if (!text.trim() && !imageFile) return;
-    if (loading) return;
+  // Restore the previous conversation on mount. Previously this never ran and
+  // the thread was empty on every page load.
+  useEffect(() => {
+    if (sessionIdRef.current) loadHistory();
+  }, [loadHistory]);
 
-    const userMsg = {
-      id: Date.now().toString(),
-      role: 'user',
-      content: text.trim() || (imageFile ? 'Analyzed Image' : ''),
-      image: imageFile ? URL.createObjectURL(imageFile) : null,
-      timestamp: new Date().toISOString(),
-    };
-
-    setMessages((prev) => [...prev, userMsg]);
-    setLoading(true);
-    setError(null);
-
-    const typingId = 'typing_' + Date.now();
-    setMessages((prev) => [...prev, { id: typingId, role: 'typing' }]);
-
-    try {
-      const res = await sendMessage(text.trim(), sessionIdRef.current, imageFile);
-
-      if (res.session_id) {
-        sessionIdRef.current = res.session_id;
-        localStorage.setItem(SESSION_KEY, res.session_id);
+  const persistSession = useCallback((nextId, nextKey) => {
+    if (nextId) {
+      sessionIdRef.current = nextId;
+      setSessionIdState(nextId);
+      try {
+        localStorage.setItem(SESSION_KEY, nextId);
+      } catch {
+        /* ignore */
       }
+    }
+    if (nextKey) {
+      accessKeyRef.current = nextKey;
+      setAccessKeyState(nextKey);
+      try {
+        localStorage.setItem(ACCESS_KEY, nextKey);
+      } catch {
+        /* ignore */
+      }
+    }
+  }, []);
 
-      const botMsg = {
-        id: Date.now().toString() + '_bot',
-        role: 'assistant',
-        content: res.reply || 'Sorry, koi response nahi mila.',
+  const sendMsg = useCallback(
+    async (text, imageFile = null) => {
+      const trimmed = (text || '').trim();
+      if (!trimmed && !imageFile) return;
+      if (loading) return;
+
+      const userMsg = {
+        id: `u_${Date.now()}`,
+        role: 'user',
+        content: trimmed || (imageFile ? 'Analyzed Image' : ''),
+        image: imageFile ? URL.createObjectURL(imageFile) : null,
         timestamp: new Date().toISOString(),
-        sources: res.sources || [],
       };
 
-      setMessages((prev) => prev.filter((m) => m.id !== typingId).concat(botMsg));
-    } catch (e) {
-      setError(e.message);
-      setMessages((prev) => prev.filter((m) => m.id !== typingId).concat({
-        id: Date.now().toString() + '_err',
-        role: 'error',
-        content: `⚠️ ${e.message}. Please try again.`,
-        timestamp: new Date().toISOString(),
-      }));
-    } finally {
-      setLoading(false);
-    }
-  }, [loading]);
+      setMessages((prev) => [...prev, userMsg]);
+      setLoading(true);
+      setError(null);
+
+      const typingId = `typing_${Date.now()}`;
+      setMessages((prev) => [...prev, { id: typingId, role: 'typing' }]);
+
+      try {
+        const res = await sendMessage(trimmed, sessionIdRef.current, imageFile, accessKeyRef.current);
+        persistSession(res.session_id, res.access_key);
+
+        const botMsg = {
+          id: `a_${Date.now()}`,
+          role: 'assistant',
+          content: res.reply || res.answer || 'Sorry, koi response nahi mila.',
+          timestamp: new Date().toISOString(),
+          sources: res.sources || [],
+        };
+        setMessages((prev) => prev.filter((m) => m.id !== typingId).concat(botMsg));
+      } catch (e) {
+        setError(e.message);
+        setMessages((prev) =>
+          prev.filter((m) => m.id !== typingId).concat({
+            id: `e_${Date.now()}`,
+            role: 'error',
+            content: `⚠️ ${e.message}`,
+            timestamp: new Date().toISOString(),
+          })
+        );
+      } finally {
+        setLoading(false);
+      }
+    },
+    [loading, persistSession]
+  );
 
   const clearChat = useCallback(async () => {
     try {
-      if (sessionIdRef.current) await clearChatSession(sessionIdRef.current);
-    } catch (_) {}
+      if (sessionIdRef.current) {
+        await clearChatSession(sessionIdRef.current, accessKeyRef.current);
+      }
+    } catch {
+      /* the local thread is reset regardless */
+    }
     sessionIdRef.current = null;
-    localStorage.removeItem(SESSION_KEY);
-    setMessages([welcomeMsg]);
+    accessKeyRef.current = null;
+    setSessionIdState(null);
+    setAccessKeyState(null);
+    try {
+      localStorage.removeItem(SESSION_KEY);
+      localStorage.removeItem(ACCESS_KEY);
+    } catch {
+      /* ignore */
+    }
+    setMessages([welcomeMsg()]);
     setError(null);
   }, []);
 
-  const setSessionId = (sid) => {
-    sessionIdRef.current = sid;
-    localStorage.setItem(SESSION_KEY, sid);
-    loadHistory(sid);
-  };
+  const setSessionId = useCallback(
+    (sid, key) => {
+      persistSession(sid, key);
+      setMessages([welcomeMsg()]);
+      setError(null);
+      if (sid) loadHistory(sid, key ?? accessKeyRef.current);
+    },
+    [persistSession, loadHistory]
+  );
 
-  return { messages, loading, error, sendMsg, clearChat, setSessionId, loadHistory };
+  return { messages, loading, error, sessionId, sendMsg, clearChat, setSessionId, loadHistory };
 };

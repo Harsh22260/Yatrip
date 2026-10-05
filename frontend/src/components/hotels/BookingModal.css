@@ -14,13 +14,13 @@
 @keyframes bm-fade-in { from { opacity: 0 } to { opacity: 1 } }
 
 .bm-modal {
-  background: #fff;
+  background: var(--bg-card-solid);
   border-radius: 20px;
   padding: 32px;
   width: 100%;
   max-width: 460px;
   position: relative;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-sans);
   animation: bm-slide-up 0.25s ease;
   box-shadow: 0 20px 60px rgba(0,0,0,0.25);
 }
@@ -38,7 +38,7 @@
   border-radius: 50%;
   font-size: 0.85rem;
   cursor: pointer;
-  color: #5a5048;
+  color: var(--text-soft);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -47,7 +47,7 @@
 .bm-close:hover { background: #e0d9d0; }
 
 .bm-title {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 1.4rem;
   color: #1a1209;
   margin: 0 0 4px;
@@ -85,7 +85,7 @@
 }
 
 .bm-total strong {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 1.1rem;
   color: #b5420a;
 }
@@ -113,12 +113,12 @@
 }
 
 .bm-timer.urgent {
-  border-color: #842029;
+  border-color: var(--bad-400);
   background: #FFF5F5;
 }
 
 .bm-timer span {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 2.8rem;
   font-weight: 700;
   color: #1a1209;
@@ -126,7 +126,7 @@
   letter-spacing: 0.06em;
 }
 
-.bm-timer.urgent span { color: #842029; }
+.bm-timer.urgent span { color: var(--bad-400); }
 
 .bm-timer p {
   font-size: 0.8rem;
@@ -145,7 +145,7 @@
   flex: 1;
   padding: 12px;
   border-radius: 10px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-sans);
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
@@ -167,14 +167,14 @@
 
 .bm-btn.secondary {
   background: #f0ece6;
-  color: #5a5048;
+  color: var(--text-soft);
 }
 
 .bm-btn.secondary:hover:not(:disabled) { background: #e0d9d0; }
 
 /* Error */
 .bm-error {
-  color: #842029;
+  color: var(--bad-400);
   font-size: 0.84rem;
   background: #F8D7DA;
   padding: 8px 12px;
@@ -202,13 +202,13 @@
 }
 
 .bm-success h2 {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 1.4rem;
   color: #1a1209;
   margin: 0 0 8px;
 }
 
-.bm-success p { color: #5a5048; margin: 0 0 6px; font-size: 0.9rem; }
+.bm-success p { color: var(--text-soft); margin: 0 0 6px; font-size: 0.9rem; }
 .bm-booking-id { font-size: 0.72rem; font-family: monospace; color: #9a8f83; }
 
 /* Error state */
@@ -223,8 +223,8 @@
 }
 
 .bm-error-state h2 {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 1.3rem;
-  color: #842029;
+  color: var(--bad-400);
   margin: 0 0 8px;
 }

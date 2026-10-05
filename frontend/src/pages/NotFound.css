@@ -1,0 +1,95 @@
+.nf {
+  min-height: 78vh;
+  display: grid;
+  place-items: center;
+  padding: var(--sp-8) clamp(1rem, 4vw, 2.5rem) var(--sp-7);
+  /* Navbar clearance comes from .app-main in index.css; this used to add its
+     own margin-top on top of it. */
+}
+
+.nf-inner {
+  max-width: 620px;
+  text-align: center;
+  animation: yt-fade-up var(--t-slow) var(--ease-out) both;
+}
+
+.nf-code {
+  font-family: var(--font-display);
+  font-size: clamp(4.5rem, 3rem + 9vw, 8rem);
+  font-weight: 700;
+  line-height: 0.9;
+  letter-spacing: -0.05em;
+  background: linear-gradient(120deg, var(--brand-300), var(--gold-300) 60%, var(--violet-400));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  opacity: 0.9;
+}
+
+.nf-title {
+  font-size: var(--fs-h2);
+  margin: var(--sp-4) 0 var(--sp-3);
+}
+
+.nf-sub {
+  font-size: var(--fs-lead);
+  line-height: 1.7;
+  color: var(--text-muted);
+  margin-bottom: var(--sp-6);
+}
+
+.nf-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  justify-content: center;
+  margin-bottom: var(--sp-7);
+}
+
+.nf-suggestions-label {
+  margin-bottom: var(--sp-3);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.nf-suggestions ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.nf-suggestion {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--line);
+  background: var(--bg-inset);
+  font-size: 0.86rem;
+  font-weight: 500;
+  color: var(--text-soft);
+  transition: all var(--t-base) var(--ease);
+}
+
+.nf-suggestion svg {
+  color: var(--brand-400);
+}
+
+.nf-suggestion:hover {
+  color: var(--text);
+  border-color: var(--line-brand);
+  background: rgba(255, 107, 53, 0.12);
+  transform: translateY(-2px);
+}
+
+@media (max-width: 480px) {
+  .nf-actions .yt-btn {
+    width: 100%;
+  }
+}

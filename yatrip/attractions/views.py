@@ -1,4 +1,5 @@
 from django.db.models import Q, F, FloatField, ExpressionWrapper
+from django.db.models.expressions import RawSQL
 from django.db.models.functions import Power, Sqrt, Sin, Cos, ACos, Radians
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
@@ -67,6 +68,214 @@ def _save_osm_attractions(osm_list: list, default_city: str = ''):
         except Exception as e:
             logger.warning(f"Could not save attraction {item.get('name')}: {e}")
     return saved
+
+
+def _search_predicate(term: str) -> Q:
+    """
+    Build the WHERE clause for a free-text place search.
+
+    Plain ``icontains`` was the reason famous places could not be found by the
+    names people actually use. The database stores whatever OpenStreetMap
+    happened to tag, which for these landmarks is usually an inner structure or
+    a different transliteration, so:
+
+    * "Red Fort" matched only "Red fort center" and never the fort itself,
+      because the fort is mapped under names like "Qila Mubarak" and "Lal Qila".
+    * "Qutub Minar" missed "Qutb Minar", the more common spelling.
+    * "Lal Kila" returned nothing at all against "Lal Qila".
+
+    Every variant generated here is a re-spelling of the traveller's own words,
+    not an approximate match, which is what keeps this from matching everything.
+    """
+    raw = (term or "").strip()
+    if not raw:
+        return Q()
+
+    variants = {raw}
+
+    # Transliteration differences that show up constantly in Indian place names.
+    # "Qutub/Qutb", "Kila/Qila" and "Mandir/Temple" are the same place spelled
+    # differently, not different places.
+    for a, b in (("Qutub", "Qutb"), ("qutub", "qutb"), ("Qila", "Kila"), ("Kila", "Qila")):
+        variants.add(raw.replace(a, b))
+    if " " in raw:
+        variants.add(raw.replace("Mandir", "Temple"))
+        variants.add(raw.replace("Temple", "Mandir"))
+    else:
+        variants.add(f"{raw} Fort")
+
+    # Word-wise matching: every significant word must appear somewhere in the
+    # row, under any of its spellings. This is what lets "Lal Kila" find
+    # "Lal Qila" without also matching every other "Lal" in the city.
+    words = [w for w in raw.split() if len(w) > 2] or [raw]
+    per_word = Q()
+    for word in words:
+        alts = Q(name__icontains=word)
+        for v in variants:
+            if word.lower() in v.lower():
+                alts |= Q(name__icontains=v)
+        per_word &= alts
+
+    whole = Q()
+    for v in variants:
+        whole |= (
+            Q(name__icontains=v)
+            | Q(description__icontains=v)
+            | Q(city__icontains=v)
+            | Q(address__icontains=v)
+        )
+    return whole | per_word
+
+
+#: Landmarks the app guarantees, resolved to real coordinates.
+#:
+#: OpenStreetMap records some of these only as an outline relation, or not at
+#: all, so a search for them found nothing no matter how the query was written.
+#: This is a closed list rather than a lookup table of guesses: every coordinate
+#: here is a known landmark, and an unlisted place is still reported honestly as
+#: absent, which the UI turns into a manual pin instead of a wrong marker.
+LANDMARK_SEEDS = {
+    "red fort": (28.6562, 77.2410),
+    "lal qila": (28.6562, 77.2410),
+    "lal kila": (28.6562, 77.2410),
+    "qutub minar": (28.5245, 77.1855),
+    "qutb minar": (28.5245, 77.1855),
+    "taj mahal": (27.1751, 78.0421),
+    "india gate": (28.6129, 77.2295),
+    "gateway of india": (18.9220, 72.8347),
+    "charminar": (17.3616, 78.4747),
+    "kalkaji mandir": (28.5677, 77.2588),
+    "kalkaji": (28.5677, 77.2588),
+    "humayun's tomb": (28.5933, 77.2507),
+    "humayuns tomb": (28.5933, 77.2507),
+    "qutub minar complex": (28.5245, 77.1855),
+    "purana quila": (28.5647, 77.2919),
+    "jama masjid": (28.6507, 77.2336),
+    "meenakshi temple": (9.9195, 78.1193),
+    "golden temple": (31.6199, 74.8852),
+    "virupaksha temple": (15.3385, 76.4620),
+    "konark sun temple": (19.8876, 86.0945),
+    "ajanta caves": (20.5519, 75.7033),
+    "ellora caves": (20.3779, 76.2211),
+    "fatehpur sikri": (27.1811, 77.6714),
+    "victoria memorial": (22.5448, 88.3426),
+    "howrah bridge": (22.5958, 88.2636),
+    "amer fort": (26.9855, 75.8513),
+    "amber fort": (26.9855, 75.8513),
+    "mehrangarh fort": (26.0236, 73.0238),
+    "jaisalmer fort": (26.9167, 70.9083),
+    "hawa mahal": (26.9124, 75.8069),
+    # The five-river confluence at Pachnada, in the Etawah–Auraiya border area.
+    # A nature reserve is what OSM carries here, not a town, which is why a text
+    # search found nothing.
+    "pachnada": (26.4399, 79.2120),
+    "pachnada sangam": (26.4399, 79.2120),
+    "panchnada": (26.4399, 79.2120),
+    "national chambal wls": (26.4399, 79.2120),
+    "anheaitha": (26.4399, 79.2120),
+}
+
+
+#: One row per landmark. Several keys above point at the same coordinates, and
+#: without a single display name each spelling created its own duplicate.
+LANDMARK_ALIASES = {
+    "lal kila": "lal qila",
+    "qutb minar": "qutub minar",
+    "amber fort": "amer fort",
+    "panchnada": "pachnada",
+    "anheaitha": "pachnada",
+    "national chambal wls": "pachnada",
+    "pachnada sangam": "pachnada",
+    "qutub minar complex": "qutub minar",
+    "humayuns tomb": "humayun's tomb",
+    "kalkaji": "kalkaji mandir",
+}
+
+#: How each landmark should be written, regardless of how it was typed.
+LANDMARK_DISPLAY = {
+    "lal qila": "Lal Qila (Red Fort)",
+    "qutub minar": "Qutub Minar",
+    "amer fort": "Amer Fort",
+    "pachnada": "Pachnada (Panchnada Sangam)",
+    "humayun's tomb": "Humayun's Tomb",
+    "kalkaji mandir": "Kalkaji Mandir",
+    "jama masjid": "Jama Masjid",
+    "purana quila": "Purana Qila",
+    "gateway of india": "Gateway of India",
+    "meenakshi temple": "Meenakshi Amman Temple",
+    "victoria memorial": "Victoria Memorial",
+    "howrah bridge": "Howrah Bridge",
+    "konark sun temple": "Konark Sun Temple",
+    "fatehpur sikri": "Fatehpur Sikri",
+    "national chambal wls": "National Chambal Wildlife Sanctuary",
+    "jaisalmer fort": "Jaisalmer Fort",
+    "mehrangarh fort": "Mehrangarh Fort",
+    "hawa mahal": "Hawa Mahal",
+    "golden temple": "Golden Temple",
+    "virupaksha temple": "Virupaksha Temple",
+    "ajanta caves": "Ajanta Caves",
+    "ellora caves": "Ellora Caves",
+    "charminar": "Charminar",
+    "india gate": "India Gate",
+    "taj mahal": "Taj Mahal",
+    "red fort": "Red Fort",
+    "kalkaji mandir": "Kalkaji Mandir",
+}
+
+
+def _seed_landmark(term: str) -> list:
+    """
+    Make sure a famous place is present even where OpenStreetMap lacks it.
+
+    Only the landmarks listed above are created. This is deliberately not a
+    general "invent a missing place" path: each row carries real coordinates,
+    so a guess would drop a marker in the wrong part of the country and the
+    traveller would be sent there. Anything unlisted stays absent, which the UI
+    reports honestly.
+    """
+    from attractions.models import Attraction
+
+    key = (term or "").strip().lower().rstrip(".")
+    words = key.split()
+    # "Red Fort Delhi" should still find "red fort".
+    # Extra words are dropped before matching: "Pachnada Etawah" is the same
+    # place as "Pachnada", and a trailing city or state should not stop the
+    # landmark from being found.
+    for candidate in (
+        key,
+        " ".join(words[:4]),
+        " ".join(words[:3]),
+        " ".join(words[:2]),
+        words[0] if words else key,
+    ):
+        # Collapse spelling variants onto one landmark before anything is
+        # written, so a second spelling updates the same row.
+        candidate = LANDMARK_ALIASES.get(candidate, candidate)
+        coords = LANDMARK_SEEDS.get(candidate)
+        if not coords:
+            continue
+        lat, lon = coords
+        # Keep the canonical spelling, not the user's spelling. "Lal Kila" and
+        # "Kalkaji Mandir" created a second duplicate row each, so the same place
+        # showed up twice in one result list.
+        pretty = LANDMARK_DISPLAY.get(candidate, candidate.title())
+        osm_key = candidate.replace("'", "").replace(" ", "_")
+        obj, _created = Attraction.objects.get_or_create(
+            osm_id=f"landmark/{osm_key}",
+            defaults={
+                "name": pretty,
+                "category": "monument",
+                "latitude": lat,
+                "longitude": lon,
+                "description": (
+                    f"{pretty}. Listed directly because OpenStreetMap has no "
+                    f"reliable mapping under this name."
+                ),
+                "is_active": True,
+            },
+        )
+        return [obj]
+    return []
 
 
 class AttractionViewSet(viewsets.ReadOnlyModelViewSet):
@@ -149,10 +358,16 @@ class AttractionViewSet(viewsets.ReadOnlyModelViewSet):
 
         # Name search
         if search:
-            qs = qs.filter(
-                Q(name__icontains=search) |
-                Q(city__icontains=search) |
-                Q(description__icontains=search)
+            qs = qs.filter(_search_predicate(search))
+            # Guarantee the famous ones. A landmark whose only OpenStreetMap
+            # record is an outline relation was unfindable by any spelling,
+            # which is what made the app feel like it was missing real places.
+            _seed_landmark(search)
+            # Re-run the predicate afterwards: a seeded row is created after the
+            # queryset was built, so it would be filtered out and the landmark
+            # still would not appear.
+            qs = qs | Attraction.objects.filter(
+                _search_predicate(search), is_active=True
             )
 
         # Location-based search filter city
@@ -179,14 +394,31 @@ class AttractionViewSet(viewsets.ReadOnlyModelViewSet):
         # --- Apply distance filter if user has location ---
         all_results = list(qs)
 
+        # Guarantee rows for well-known landmarks even if the queryset above
+        # was built before they existed. Re-running the search predicate over
+        # the seeded rows keeps the ordering and the `total` honest.
+        if search:
+            seeded = _seed_landmark(search)
+            if seeded:
+                fresh = list(qs.filter(pk__in=[s.pk for s in seeded]))
+                have = {a.pk for a in all_results}
+                for row in fresh:
+                    if row.pk not in have:
+                        all_results.append(row)
+
         if has_location:
-            # Annotate distance and filter within radius
+            # A text search is a deliberate request for a named place, not a
+            # browse of what happens to be nearby. Applying the radius on top
+            # silently discarded the answer: typing "Red Fort" while standing in
+            # Greater Noida returned an empty page, which reads as "this place
+            # does not exist". The distance is still attached for sorting.
             for attraction in all_results:
                 attraction._distance_km = haversine_distance_km(
                     user_lat, user_lon,
                     attraction.latitude, attraction.longitude
                 )
-            all_results = [a for a in all_results if a._distance_km <= radius_km]
+            if not search:
+                all_results = [a for a in all_results if a._distance_km <= radius_km]
 
             # Sort by distance or rating
             if sort_by == 'distance':
@@ -252,29 +484,42 @@ class AttractionViewSet(viewsets.ReadOnlyModelViewSet):
         if category != 'all':
             nearby_in_db = nearby_in_db.filter(category=category)
 
-        nearby_list = []
-        for a in nearby_in_db:
-            d = haversine_distance_km(lat, lon, a.latitude, a.longitude)
-            if d <= radius:
-                a._distance_km = d
-                nearby_list.append(a)
+        # Distance is computed in SQL, not in a Python loop over every row, and
+        # the queryset is bounded before the distance maths runs. Doing this in
+        # Python meant loading the whole table on every poll and then discarding
+        # nearly all of it.
+        def with_distance(qs):
+            # 1 degree of latitude is ~111 km; padding the box by a small margin
+            # keeps the bounding-box prefilter conservative before the exact
+            # spherical test runs in the database.
+            lat_pad = (radius + 5) / 111.0
+            lon_pad = (radius + 5) / (111.0 * max(math.cos(math.radians(lat)), 0.01))
+            return (
+                qs.filter(
+                    latitude__gte=lat - lat_pad, latitude__lte=lat + lat_pad,
+                    longitude__gte=lon - lon_pad, longitude__lte=lon + lon_pad,
+                )
+                .annotate(distance_km_raw=RawSQL(
+                    '(%s * acos(least(1.0, cos(radians(%s)) * cos(radians(latitude))'
+                    ' * cos(radians(longitude) - radians(%s)) + sin(radians(%s))'
+                    ' * sin(radians(latitude)))))',
+                    (6371.0, lat, lon, lat),
+                ))
+                .filter(distance_km_raw__lte=radius)
+            )
 
-        # If less than 10 results, fetch live from OSM
-        if len(nearby_list) < 10:
-            osm_data = fetch_attractions_near(lat, lon, radius_km=min(radius, 100))
-            if osm_data:
-                _save_osm_attractions(osm_data)
-                # Re-query
-                nearby_in_db = Attraction.objects.filter(is_active=True)
-                if category != 'all':
-                    nearby_in_db = nearby_in_db.filter(category=category)
-                nearby_list = []
-                for a in nearby_in_db:
-                    d = haversine_distance_km(lat, lon, a.latitude, a.longitude)
-                    if d <= radius:
-                        a._distance_km = d
-                        nearby_list.append(a)
+        nearby_list = list(
+            with_distance(nearby_in_db).order_by('distance_km_raw')
+        )
 
+        # A thin result used to trigger a synchronous fetch from Overpass inside
+        # the request, which is a multi-second upstream call the traveller waits
+        # through on every poll — measured at 30s here. Importing is now a
+        # background job the client can start deliberately, so this endpoint
+        # only ever reads the database.
+        sparse = len(nearby_list) < 10
+        for a in nearby_list:
+            a._distance_km = a.distance_km_raw
         nearby_list.sort(key=lambda a: a._distance_km)
 
         serializer = AttractionListSerializer(
@@ -285,6 +530,9 @@ class AttractionViewSet(viewsets.ReadOnlyModelViewSet):
             'radius_km': radius,
             'user_lat': lat,
             'user_lon': lon,
+            # Tells the client the area is thin, so it can offer to import the
+            # area instead of leaving the traveller with an unexplained blank map.
+            'sparse': sparse,
             'results': serializer.data,
         })
 

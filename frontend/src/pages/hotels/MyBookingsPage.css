@@ -1,7 +1,7 @@
 .mbp-page {
-  min-height: 100vh;
-  background: #f5f0ea;
-  font-family: 'DM Sans', sans-serif;
+  min-height: calc(100dvh - var(--nav-h));
+  background: var(--bg-body);
+  font-family: var(--font-sans);
 }
 
 .mbp-header {
@@ -10,7 +10,7 @@
 }
 
 .mbp-title {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 2rem;
   color: #f5e8d0;
   margin: 0 0 4px;
@@ -35,7 +35,7 @@
 }
 
 .mbp-card {
-  background: #fff;
+  background: var(--bg-card-solid);
   border-radius: 14px;
   padding: 20px 22px;
   border: 1px solid #e8e0d6;
@@ -53,7 +53,7 @@
 }
 
 .mbp-hotel-name {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 1.1rem;
   color: #1a1209;
   margin: 0 0 2px;
@@ -70,7 +70,7 @@
   align-items: center;
   gap: 12px;
   font-size: 0.85rem;
-  color: #5a5048;
+  color: var(--text-soft);
   margin-bottom: 14px;
 }
 
@@ -92,7 +92,7 @@
 }
 
 .mbp-price {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 1.1rem;
   font-weight: 700;
   color: #b5420a;
@@ -111,7 +111,7 @@
 
 .mbp-timer.urgent {
   background: #F8D7DA;
-  color: #842029;
+  color: var(--bad-400);
 }
 
 .mbp-actions { display: flex; gap: 8px; }
@@ -119,7 +119,7 @@
 .mbp-btn {
   padding: 7px 14px;
   border-radius: 8px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-sans);
   font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
@@ -131,7 +131,7 @@
 
 .mbp-btn.cancel {
   background: #F8D7DA;
-  color: #842029;
+  color: var(--bad-400);
 }
 
 .mbp-btn.cancel:hover:not(:disabled) { background: #f0c0c5; }
@@ -155,5 +155,5 @@
 .mbp-error {
   text-align: center;
   padding: 40px;
-  color: #842029;
+  color: var(--bad-400);
 }

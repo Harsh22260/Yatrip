@@ -1,19 +1,22 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@400;500;600;700&display=swap');
 
 :root {
-  --hotel-primary: #b5420a;
-  --hotel-primary-light: #d4691e;
-  --hotel-dark: #1a1209;
-  --hotel-dark-accent: #3d2b1f;
-  --hotel-cream: #f5f0ea;
-  --hotel-gold: #f5e8d0;
-  --hotel-text: #5a5048;
+  /* Was a warm cream-and-brown light theme (#f5f0ea page, #5a5048 text) that
+     matched nothing else in the product. Re-pointed at the shared tokens so
+     every rule below inherits the dark ground. */
+  --hotel-primary: var(--brand-500);
+  --hotel-primary-light: var(--brand-400);
+  --hotel-dark: var(--ink-900);
+  --hotel-dark-accent: var(--ink-700);
+  --hotel-cream: var(--bg-body);
+  --hotel-gold: var(--ink-800);
+  --hotel-text: var(--text);
 }
 
 .hlp-page {
-  min-height: 100vh;
-  background: var(--hotel-cream);
-  font-family: 'DM Sans', sans-serif;
+  min-height: calc(100dvh - var(--nav-h));
+  background: var(--bg-body);
+  font-family: var(--font-sans);
 }
 
 /* ─── HEADER ─── */
@@ -36,7 +39,7 @@
 }
 
 .hlp-title {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 3.5rem;
   font-weight: 700;
   color: #fff;
@@ -78,7 +81,7 @@
 }
 
 .hlp-search:focus {
-  background: #fff;
+  background: var(--bg-card-solid);
   box-shadow: 0 15px 50px rgba(181, 66, 10, 0.4);
   transform: translateY(-2px);
 }
@@ -111,7 +114,7 @@
   font-weight: 700;
   font-size: 1.1rem;
   margin-bottom: 2px;
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
 }
 
 .hlp-business-info p {
@@ -159,7 +162,7 @@
 
 /* ─── LOGIN BAR ─── */
 .hlp-login-bar {
-  background: #fff;
+  background: var(--bg-card-solid);
   padding: 16px 40px;
   display: flex;
   align-items: center;

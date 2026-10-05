@@ -14,7 +14,7 @@
 }
 
 .flp {
-  min-height: 100vh;
+  min-height: calc(100dvh - var(--nav-h));
   background-color: var(--food-bg);
   background-image:
     radial-gradient(at 0% 0%, rgba(245, 158, 11, 0.1) 0px, transparent 50%),
@@ -290,7 +290,7 @@
 }
 
 .flp__view-btn.active {
-  background: #fff;
+  background: var(--bg-card-solid);
   color: var(--food-bg);
   border-color: #fff;
 }
@@ -334,7 +334,15 @@
   margin-bottom: 24px;
 }
 
-.flp__empty button {
+.flp__empty-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.flp__empty button,
+.flp__coverage button {
   background: var(--food-primary);
   color: #fff;
   border: none;
@@ -342,6 +350,62 @@
   border-radius: 12px;
   font-weight: 600;
   cursor: pointer;
+}
+
+.flp__empty button.ghost,
+.flp__coverage button.ghost {
+  background: transparent;
+  border: 1px solid var(--food-glass-border);
+  color: var(--food-text-muted);
+}
+
+.flp__empty button:disabled,
+.flp__coverage button:disabled {
+  opacity: 0.55;
+  cursor: progress;
+}
+
+/* Coverage notice: shown when the current area has almost nothing in it. */
+.flp__coverage {
+  max-width: 1200px;
+  margin: 24px auto 0;
+  padding: 20px 24px;
+  border: 1px dashed var(--food-glass-border);
+  border-radius: 16px;
+  background: rgba(30, 41, 59, 0.35);
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.flp__coverage strong {
+  color: #fff;
+  font-size: 1.05rem;
+}
+
+.flp__coverage p {
+  margin: 6px 0 0;
+  color: var(--food-text-muted);
+  font-size: 0.9rem;
+}
+
+.flp__coverage-msg {
+  display: block;
+  margin-top: 8px;
+  font-size: 0.82rem;
+  color: var(--food-primary);
+}
+
+.flp__coverage-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.flp__coverage-actions button {
+  padding: 10px 22px;
 }
 
 .flp__pagination {

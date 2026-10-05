@@ -1,16 +1,21 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useVendorDetail } from '../../hooks/useFood';
 import MenuItemCard from '../../components/food/MenuItemCard';
 import { getVendorTypeMeta, formatPrice, renderStars } from '../../utils/foodHelpers';
+import { artFor, artworkDataUri } from '../../utils/placeArt';
+import { categoryFallback, fallbackCredit } from '../../utils/foodFallbackImages';
 import './FoodDetailPage.css';
 
 const StarRating = ({ rating }) => {
-  const { full, half, empty } = renderStars(rating);
+  // OSM rows carry rating 0 and a manually registered outlet can carry null, so
+  // this cannot assume a number. `.toFixed` on null threw and blanked the page.
+  const value = Number.isFinite(Number(rating)) ? Number(rating) : 0;
+  const { full, half, empty } = renderStars(value);
   return (
     <span className="fdp-stars">
       {'★'.repeat(full)}{half ? '½' : ''}{'☆'.repeat(empty)}
-      <span className="fdp-rating-num"> {rating.toFixed(1)}</span>
+      <span className="fdp-rating-num"> {value.toFixed(1)}</span>
     </span>
   );
 };
@@ -20,6 +25,9 @@ const FoodDetailPage = () => {
   const navigate = useNavigate();
   const { vendor, loading, error } = useVendorDetail(id);
   const [activeTab, setActiveTab] = useState('menu'); // menu | info
+  // The URL that failed to load, rather than a boolean, so moving from one place
+  // to the next does not inherit the previous page's broken image.
+  const [failedSrc, setFailedSrc] = useState(null);
 
   if (loading) return <div className="fdp-loading">Loading vendor...</div>;
   if (error) return (
@@ -32,14 +40,48 @@ const FoodDetailPage = () => {
 
   const { icon, label, color } = getVendorTypeMeta(vendor.category);
   const coverImage = vendor.image_url;
-  const availableItems = vendor.menu_items?.filter((i) => i.is_available) || [];
-  const unavailableItems = vendor.menu_items?.filter((i) => !i.is_available) || [];
+  // Almost every row imported from OpenStreetMap has no photograph of its own, so
+  // the hero uses the bundled real photograph for the category rather than a flat
+  // gradient or generated artwork. Artwork stays as the last resort if the
+  // photograph itself cannot be loaded.
+  const heroPhoto = coverImage || categoryFallback(vendor.category).src;
+  const heroBroken = Boolean(heroPhoto) && heroPhoto === failedSrc;
+  // CC BY and CC BY-SA require attribution, so whichever photograph is shown has
+  // to carry its credit: the stored one for the place's own photo, the bundled
+  // one for the category photo.
+  const heroCredit = coverImage ? vendor.image_credit : fallbackCredit(vendor.category);
+  const art = artFor(vendor.category, vendor.name);
+  // The backend did not return menu_items at all, so `menu_items?.length === 0`
+  // was `undefined === 0` -> false: the "no menu" message never rendered and the
+  // tab just looked broken. Default to an empty list first.
+  const menuItems = vendor.menu_items ?? [];
+  const availableItems = menuItems.filter((i) => i.is_available !== false);
+  const unavailableItems = menuItems.filter((i) => i.is_available === false);
 
   return (
     <div className="fdp-page">
       {/* Hero */}
-      <div className="fdp-hero" style={{ background: `linear-gradient(135deg, #78350f, ${color})` }}>
-        {coverImage && <img src={coverImage} alt={vendor.name} className="fdp-hero-img" />}
+      <div
+        className="fdp-hero"
+        style={
+          heroBroken
+            ? { backgroundImage: `url("${artworkDataUri(art, vendor.name)}")`, backgroundSize: 'cover', backgroundPosition: 'center' }
+            : { background: `linear-gradient(135deg, #78350f, ${color})` }
+        }
+      >
+        {heroPhoto && !heroBroken && (
+          <img
+            src={heroPhoto}
+            alt={vendor.name}
+            className="fdp-hero-img"
+            onError={() => setFailedSrc(heroPhoto)}
+          />
+        )}
+        {/* Wikimedia photography has attribution requirements, so the credit has
+            to sit next to the photograph it belongs to. */}
+        {heroCredit && !heroBroken && (
+          <span className="fdp-hero-credit">{heroCredit}</span>
+        )}
         <div className="fdp-hero-overlay">
           <button className="fdp-back-btn" onClick={() => navigate('/food')}>← All Vendors</button>
           <div className="fdp-hero-info">
@@ -70,7 +112,7 @@ const FoodDetailPage = () => {
         {/* Tabs */}
         <div className="fdp-tabs">
           <button className={`fdp-tab ${activeTab === 'menu' ? 'active' : ''}`} onClick={() => setActiveTab('menu')}>
-            🍽️ Menu ({vendor.menu_items?.length || 0})
+            🍽️ Menu ({menuItems.length})
           </button>
           <button className={`fdp-tab ${activeTab === 'info' ? 'active' : ''}`} onClick={() => setActiveTab('info')}>
             ℹ️ Info
@@ -80,7 +122,7 @@ const FoodDetailPage = () => {
         {/* Menu Tab */}
         {activeTab === 'menu' && (
           <div className="fdp-menu">
-            {vendor.menu_items?.length === 0 && (
+            {menuItems.length === 0 && (
               <p className="fdp-no-menu">No menu items added yet.</p>
             )}
 
@@ -144,8 +186,10 @@ const FoodDetailPage = () => {
               <div className="fdp-info-item">
                 <span className="fdp-info-icon">⭐</span>
                 <div>
-                  <span className="fdp-info-label">Rating</span>
-                  <span className="fdp-info-val">{vendor.rating.toFixed(1)} / 5</span>
+<span className="fdp-info-label">Rating</span>
+                <span className="fdp-info-val">
+                  {(Number.isFinite(Number(vendor.rating)) ? Number(vendor.rating) : 0).toFixed(1)} / 5
+                </span>
                 </div>
               </div>
             </div>

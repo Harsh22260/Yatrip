@@ -6,7 +6,7 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-sans);
   transition: box-shadow 0.2s;
 }
 
@@ -22,7 +22,7 @@
 }
 
 .rtc-name {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 1.05rem;
   font-weight: 700;
   color: #1a1209;
@@ -40,7 +40,7 @@
   display: flex;
   gap: 12px;
   font-size: 0.8rem;
-  color: #5a5048;
+  color: var(--text-soft);
 }
 
 .rtc-pricing {
@@ -50,7 +50,7 @@
 
 .rtc-base {
   display: block;
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 1.2rem;
   font-weight: 700;
   color: #b5420a;
@@ -92,7 +92,7 @@
 
 .rtc-unit.taken {
   background: #F8D7DA;
-  color: #842029;
+  color: var(--bad-400);
   text-decoration: line-through;
 }
 
@@ -106,7 +106,7 @@
 .rtc-plans-label {
   font-size: 0.78rem;
   font-weight: 600;
-  color: #5a5048;
+  color: var(--text-soft);
   margin: 0 0 6px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -119,11 +119,11 @@
 }
 
 .rtc-plan-btn {
-  background: #fff;
+  background: var(--bg-card-solid);
   border: 1.5px solid #d4c9bc;
-  color: #5a5048;
+  color: var(--text-soft);
   font-size: 0.78rem;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-sans);
   padding: 5px 12px;
   border-radius: 8px;
   cursor: pointer;
@@ -145,7 +145,7 @@
   border: none;
   padding: 13px;
   border-radius: 10px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-sans);
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;

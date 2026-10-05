@@ -1,0 +1,170 @@
+/* ═══ Static info pages (About / Contact / Privacy / Terms) ═══════════════
+   Shared by all four, which is why they are one component rather than four.
+
+   The navbar clearance comes from .app-main in index.css; these pages used to
+   reserve it themselves, which doubled the offset once the wrapper landed. */
+
+/* ── Hero ─────────────────────────────────────────────────────────────── */
+.info-hero {
+  position: relative;
+  padding: var(--sp-8) 0 var(--sp-7);
+  border-bottom: 1px solid var(--line);
+  background:
+    radial-gradient(700px 300px at 18% 0%, rgba(255, 107, 53, 0.14), transparent 62%),
+    radial-gradient(600px 280px at 88% 10%, rgba(45, 212, 191, 0.09), transparent 62%);
+}
+
+.info-hero-inner {
+  width: 100%;
+  max-width: 860px;
+  margin-inline: auto;
+  padding-inline: clamp(1rem, 4vw, 2.5rem);
+  animation: yt-fade-up var(--t-slow) var(--ease-out) both;
+}
+
+.info-hero .section-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.info-title {
+  font-size: var(--fs-h1);
+  margin-bottom: var(--sp-4);
+}
+
+.info-lead {
+  font-size: var(--fs-lead);
+  line-height: 1.75;
+  color: var(--text-soft);
+  max-width: 62ch;
+}
+
+.info-updated {
+  margin-top: var(--sp-4);
+  font-size: 0.8rem;
+  color: var(--text-faint);
+}
+
+/* ── Body ─────────────────────────────────────────────────────────────── */
+.info-body {
+  width: 100%;
+  max-width: 860px;
+  margin-inline: auto;
+  padding: var(--sp-7) clamp(1rem, 4vw, 2.5rem) var(--sp-8);
+}
+
+.info-blocks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.info-block {
+  display: flex;
+  gap: var(--sp-4);
+  padding: var(--sp-5);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--line);
+  background: var(--bg-card);
+  animation: yt-fade-up var(--t-slow) var(--ease-out) both;
+  transition: border-color var(--t-base) var(--ease);
+}
+
+.info-block:hover {
+  border-color: var(--line-brand);
+}
+
+.info-block-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: var(--radius-md);
+  color: var(--brand-400);
+  background: rgba(255, 107, 53, 0.12);
+  border: 1px solid var(--line-brand);
+}
+
+.info-block-title {
+  font-family: var(--font-sans);
+  font-size: 1.06rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin-bottom: 0.4rem;
+}
+
+.info-block-body {
+  font-size: 0.94rem;
+  line-height: 1.75;
+  color: var(--text-muted);
+  max-width: 68ch;
+}
+
+/* ── Note ─────────────────────────────────────────────────────────────── */
+.info-note {
+  display: flex;
+  gap: 0.8rem;
+  margin-top: var(--sp-5);
+  padding: var(--sp-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line-brand);
+  background: rgba(255, 107, 53, 0.08);
+  color: var(--text-soft);
+  font-size: 0.9rem;
+  line-height: 1.65;
+}
+
+.info-note svg {
+  color: var(--brand-400);
+  flex: none;
+  margin-top: 0.15rem;
+}
+
+/* ── CTA ──────────────────────────────────────────────────────────────── */
+.info-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-4);
+  margin-top: var(--sp-7);
+  padding-top: var(--sp-6);
+  border-top: 1px solid var(--line);
+}
+
+.info-switch {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.info-switch-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--line);
+  background: var(--bg-inset);
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: capitalize;
+  transition: all var(--t-base) var(--ease);
+}
+
+.info-switch-link:hover {
+  color: var(--brand-300);
+  border-color: var(--line-brand);
+  background: rgba(255, 107, 53, 0.1);
+}
+
+@media (max-width: 560px) {
+  .info-block {
+    flex-direction: column;
+    gap: var(--sp-3);
+    padding: var(--sp-4);
+  }
+}

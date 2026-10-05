@@ -1,16 +1,63 @@
-# React + Vite
+# Yatrip frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React 19 + Vite 8 single-page app for the Yatrip platform: hotels, rentals,
+food, attractions, transport and the AI assistant.
 
-Currently, two official plugins are available:
+See the [root README](../README.md) for the full architecture, the API
+reference and backend setup.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Setup
 
-## React Compiler
+```bash
+npm install
+cp .env.example .env
+npm run dev
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+The app runs on <http://localhost:5173> and expects the API on
+`http://localhost:8000/api`.
 
-## Expanding the ESLint configuration
+> Vite inlines every `VITE_*` variable into the client bundle at build time.
+> Never put a secret in `frontend/.env` - only the backend talks to model
+> providers, Pinecone or the database.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Scripts
+
+| Command | Does |
+|---|---|
+| `npm run dev` | dev server with HMR |
+| `npm run build` | production bundle into `dist/` |
+| `npm run preview` | serve the built bundle locally |
+| `npm run lint` | ESLint over the whole project |
+
+## Layout
+
+```
+src/
+  components/     Navbar, Footer, cards, modals, shared UI
+  pages/          one folder per feature area, with its own .css
+  services/       api.js (fetch wrapper) + one module per domain
+  hooks/          data fetching hooks
+  context/        auth and session providers
+  styles/         theme.css design tokens
+  utils/          transport and place helpers
+```
+
+## API paths
+
+All requests go through `src/services/api.js`, which normalises the base URL
+and joins paths. Do not hard-code URLs elsewhere.
+
+Path shape is **not** uniform, which is the most common source of 404s:
+
+- **hotels is nested** - `api/hotels/hotels/`, `api/hotels/bookings/`
+- **accounts, chatbot** - `api/accounts/`, `api/chatbot/`
+- **food, attractions** - `api/food/`, `api/attractions/`
+- **rentals, transport** are mounted under a prefix but register an empty
+  basename, so they are `api/rentals/`, `api/transport/`
+
+## Current state
+
+`npm run build` passes. `npm run lint` currently reports unused-import and
+`no-unused-vars` errors across several pages; these are pre-existing and do not
+block the build.

@@ -1,0 +1,145 @@
+[
+  {
+    "slug": "auth/panel",
+    "file": "File:Jaisalmer_forteresse.jpg",
+    "title": "Jaisalmer Fort",
+    "author": "Gérard Janot",
+    "licence": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Jaisalmer_forteresse.jpg",
+    "width": 1100,
+    "height": 458,
+    "bytes": 128877
+  },
+  {
+    "slug": "categories/attractions",
+    "file": "File:20191219_Fort_Amber,_Amer,_Jaipur_0955_9481.jpg",
+    "title": "Amber Fort",
+    "author": "Jakub Hałun",
+    "licence": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:20191219_Fort_Amber,_Amer,_Jaipur_0955_9481.jpg",
+    "width": 800,
+    "height": 726,
+    "bytes": 92165
+  },
+  {
+    "slug": "categories/hotels",
+    "file": "File:Udaipur_Lake_Palace.jpg",
+    "title": "Lake Palace",
+    "author": "user:Flicka",
+    "licence": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Udaipur_Lake_Palace.jpg",
+    "width": 800,
+    "height": 534,
+    "bytes": 61778
+  },
+  {
+    "slug": "categories/rentals",
+    "file": "File:4th_International_Auto_Show,_Bangalore_(2025)_190.jpg",
+    "title": "Royal Enfield",
+    "author": "Gpkp",
+    "licence": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:4th_International_Auto_Show,_Bangalore_(2025)_190.jpg",
+    "width": 800,
+    "height": 600,
+    "bytes": 71847
+  },
+  {
+    "slug": "categories/transport",
+    "file": "File:DelhiMetroYellowLine.JPG",
+    "title": "Delhi Metro",
+    "author": "WillaMissionary",
+    "licence": "CC0",
+    "source": "https://commons.wikimedia.org/wiki/File:DelhiMetroYellowLine.JPG",
+    "width": 800,
+    "height": 533,
+    "bytes": 57328
+  },
+  {
+    "slug": "categories/food",
+    "file": "Unsplash photo-1742281257687-092746ad6021",
+    "title": "Indian thali served with side dishes",
+    "author": "Unsplash contributor",
+    "licence": "Unsplash License",
+    "source": "https://unsplash.com/photos/indian-thali-is-served-with-side-dishes-gep3f7NQzZY",
+    "width": 800,
+    "height": 600,
+    "bytes": 96122
+  },
+  {
+    "slug": "destinations/goa",
+    "file": "File:Palolem_Beach,_South_Goa.jpg",
+    "title": "Palolem Beach",
+    "author": "iMahesh",
+    "licence": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Palolem_Beach,_South_Goa.jpg",
+    "width": 900,
+    "height": 506,
+    "bytes": 66828
+  },
+  {
+    "slug": "destinations/himachal",
+    "file": "File:Kullu_Valley_near_Manali,_Himachal_Pradesh,_India.jpg",
+    "title": "Himachal Pradesh",
+    "author": "UnpetitproleX",
+    "licence": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Kullu_Valley_near_Manali,_Himachal_Pradesh,_India.jpg",
+    "width": 900,
+    "height": 600,
+    "bytes": 111638
+  },
+  {
+    "slug": "destinations/kerala",
+    "file": "File:Alappuzha_Boat_Beauty_W.jpg",
+    "title": "Alappuzha",
+    "author": "Augustus Binu / facebook",
+    "licence": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Alappuzha_Boat_Beauty_W.jpg",
+    "width": 900,
+    "height": 596,
+    "bytes": 133901
+  },
+  {
+    "slug": "destinations/ladakh",
+    "file": "File:Hemis_Monastery_02.jpg",
+    "title": "Hemis Monastery",
+    "author": "Bernard Gagnon Canon EOS REBEL T4i",
+    "licence": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Hemis_Monastery_02.jpg",
+    "width": 900,
+    "height": 600,
+    "bytes": 154768
+  },
+  {
+    "slug": "destinations/rajasthan",
+    "file": "File:East_facade_Hawa_Mahal_Jaipur_from_ground_level_(July_2022)_-_img_01.jpg",
+    "title": "Hawa Mahal",
+    "author": "Chainwit.",
+    "licence": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:East_facade_Hawa_Mahal_Jaipur_from_ground_level_(July_2022)_-_img_01.jpg",
+    "width": 900,
+    "height": 675,
+    "bytes": 197016
+  },
+  {
+    "slug": "destinations/varanasi",
+    "file": "File:Dasaswamedh_ghat-varanasi_india-andres_larin.jpg",
+    "title": "Dashashwamedh Ghat",
+    "author": "Saaremees",
+    "licence": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Dasaswamedh_ghat-varanasi_india-andres_larin.jpg",
+    "width": 900,
+    "height": 673,
+    "bytes": 110776
+  },
+  {
+    "slug": "hero/india",
+    "file": "File:Taj_Mahal_(Edited).jpeg",
+    "title": "Taj Mahal",
+    "author": "Yann ; edited by Jim Carter",
+    "licence": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Taj_Mahal_(Edited).jpeg",
+    "width": 1280,
+    "height": 842,
+    "bytes": 209270
+  }
+]

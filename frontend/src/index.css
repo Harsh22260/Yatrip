@@ -1,31 +1,16 @@
-*, *::before, *::after {
-  box-sizing: border-box !important;
-  margin: 0;
-  padding: 0;
-}
+/* Entry stylesheet. The real content lives in styles/theme.css -- this file
+   exists only to load it and to fix up the Bootstrap container utilities.
 
-html {
-  width: 100%;
-  height: 100%;
-}
+   It previously held the leftover Vite React-template stylesheet, which
+   referenced --heading, --text-h, --mono, --border, --accent and --code-bg:
+   variables that no longer existed anywhere, so every declaration using them
+   was silently dead. */
 
-body {
-  width: 100% !important;
-  max-width: 100% !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  background: #0d0d1a !important;
-  color: rgba(255,255,255,0.85);
-  overflow-x: hidden;
-}
+@import './styles/theme.css';
 
-#root {
-  width: 100%;
-  min-height: 100vh;
-  background: #0d0d1a;
-}
-
-/* Bootstrap container override */
+/* Bootstrap's containers ship horizontal padding and a max-width. Several
+   pages (.home and friends) manage their own full-bleed gutters, and the
+   stock padding was doubling up with them. */
 .container,
 .container-fluid,
 .container-sm,
@@ -37,46 +22,23 @@ body {
   padding-right: 0 !important;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+#root {
+  min-height: 100vh;
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
-}
+/* No top padding here on purpose.
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
+   The navbar is position:sticky, so it occupies its own --nav-h in the normal
+   flow and pushes the page down by exactly that much on every route. An earlier
+   pass had .app-main add the same --nav-h again on top of each page's own
+   padding, which produced a 92-320px dead band between the bar and the first
+   heading depending on the route. One owner for the clearance, not two. */
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
-}
+/* Nothing here on purpose.
+
+   An earlier pass gave this a padding-bottom equal to how far .footer-wave
+   reaches above the footer. That produced a white rectangle directly under the
+   curve: a page's own dark background stops at its own last child, and the
+   extra strip below it fell through to <body>, which Bootstrap paints white.
+   The rectangle was caused by the padding, so the padding goes, not the colour.
+   The wave overlaps the page's existing bottom padding instead. */

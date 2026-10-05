@@ -1,41 +1,43 @@
 /* ═══════════════════════════════════════════════
    auth.css — Yatrip Auth & Profile Styles
-   Theme: Vibrant Travel | Colorful & Energetic
-═══════════════════════════════════════════════ */
- 
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Nunito:wght@400;500;600&display=swap');
- 
+   Light card on deep indigo, saffron primary.
+
+   The token names below are kept because ~30 rules in here and in Login/Register/
+   Profile reference them, but they now resolve to the shared palette in
+   styles/theme.css instead of a private one. The previous block invented its
+   own (a violet #0A1120 ground with a Poppins/Nunito stack), which is why the
+   sign-in screens did not look like the rest of the product.
+   ═══════════════════════════════════════════════ */
+
 /* ── CSS Variables ─────────────────────────────── */
 :root {
-  --primary: #FF6B35;
-  --primary-dark: #e55a26;
-  --secondary: #4ECDC4;
-  --accent: #FFE66D;
-  --purple: #7C5CBF;
-  --green: #06D6A0;
-  --bg-dark: #0f0c29;
-  --bg-mid: #302b63;
-  --bg-light: #24243e;
-  --card-bg: rgba(255, 255, 255, 0.97);
-  --text-dark: #1a1a2e;
-  --text-muted: #6b7280;
-  --border: rgba(0,0,0,0.08);
+  --primary: var(--brand-500);
+  --primary-dark: var(--brand-600);
+  --secondary: var(--teal-400);
+  --accent: var(--gold-300);
+  --purple: var(--violet-500);
+  --green: var(--ok-500);
+  --bg-dark: var(--ink-900);
+  --bg-mid: var(--ink-700);
+  --bg-light: var(--ink-800);
+  --card-bg: rgba(18, 29, 49, 0.92);
+  --text-dark: var(--text);
+  --text-muted: var(--text-muted);
+  --border: rgba(255, 255, 255, 0.1);
   --shadow: 0 25px 60px rgba(0,0,0,0.35);
-  --radius: 20px;
-  --radius-sm: 12px;
-  --font-head: 'Poppins', sans-serif;
-  --font-body: 'Nunito', sans-serif;
+  --radius: var(--radius-lg);
+  --radius-sm: var(--radius-md);
+  --font-head: var(--font-sans);
+  --font-body: var(--font-sans);
 }
- 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
  
 /* ── Root / Background ─────────────────────────── */
 .auth-root {
-  min-height: 100vh;
+  min-height: calc(100dvh - var(--nav-h));
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+  background: linear-gradient(135deg, #0A1120 0%, #1A2740 50%, #121D31 100%);
   font-family: var(--font-body);
   position: relative;
   overflow: hidden;
@@ -54,19 +56,19 @@
 }
 .blob-1 {
   width: 500px; height: 500px;
-  background: radial-gradient(circle, #FF6B35, #FFE66D);
+  background: radial-gradient(circle, #FF6B35, #FFD97A);
   top: -150px; left: -150px;
   animation-delay: 0s;
 }
 .blob-2 {
   width: 400px; height: 400px;
-  background: radial-gradient(circle, #4ECDC4, #7C5CBF);
+  background: radial-gradient(circle, #2DD4BF, #8B5CF6);
   bottom: -100px; right: -100px;
   animation-delay: 3s;
 }
 .blob-3 {
   width: 300px; height: 300px;
-  background: radial-gradient(circle, #FFE66D, #06D6A0);
+  background: radial-gradient(circle, #FFD97A, #10B981);
   top: 50%; left: 50%;
   transform: translate(-50%,-50%);
   animation-delay: 6s;
@@ -173,7 +175,7 @@
 .field-wrap:focus-within {
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.12);
-  background: #fff;
+  background: var(--bg-card-solid);
 }
  
 .field-icon { font-size: 16px; flex-shrink: 0; opacity: 0.7; }
@@ -188,7 +190,7 @@
   padding: 13px 0;
   width: 100%;
 }
-.field-input::placeholder { color: #aab4c8; }
+.field-input::placeholder { color: #B4C2D4; }
  
 .field-select {
   cursor: pointer;
@@ -226,7 +228,7 @@
  
 /* ── Auth Button ───────────────────────────────── */
 .auth-btn {
-  background: linear-gradient(135deg, var(--primary) 0%, #ff8c42 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, #FFA272 100%);
   color: #fff;
   border: none;
   border-radius: var(--radius-sm);
@@ -315,7 +317,7 @@
   width: 30px; height: 30px;
   border-radius: 50%;
   background: #e8eaf2;
-  color: #9ba3c2;
+  color: #8496AC;
   display: flex; align-items: center; justify-content: center;
   font-size: 12px;
   font-weight: 700;
@@ -324,14 +326,14 @@
   flex-shrink: 0;
 }
 .step-active .step-dot {
-  background: linear-gradient(135deg, var(--primary), #ff8c42);
+  background: linear-gradient(135deg, var(--primary), #FFA272);
   color: #fff;
   box-shadow: 0 4px 12px rgba(255,107,53,0.4);
 }
 .step-label {
   font-size: 11.5px;
   font-weight: 600;
-  color: #9ba3c2;
+  color: #8496AC;
   font-family: var(--font-head);
 }
 .step-active .step-label { color: var(--primary); }
@@ -365,11 +367,11 @@
   flex-shrink: 0;
 }
 .toggle-input:checked + .toggle-track {
-  background: linear-gradient(135deg, var(--primary), #ff8c42);
+  background: linear-gradient(135deg, var(--primary), #FFA272);
 }
 .toggle-thumb {
   width: 18px; height: 18px;
-  background: #fff;
+  background: var(--bg-card-solid);
   border-radius: 50%;
   position: absolute;
   top: 3px; left: 3px;
@@ -429,7 +431,7 @@
  
 /* Profile Header */
 .profile-header {
-  background: linear-gradient(135deg, #302b63 0%, #0f0c29 100%);
+  background: linear-gradient(135deg, #1A2740 0%, #0A1120 100%);
   padding: 32px 28px;
   display: flex;
   align-items: flex-start;
@@ -469,8 +471,8 @@
   font-weight: 700;
   font-family: var(--font-head);
 }
-.badge-verified { background: rgba(6,214,160,0.2); color: #06D6A0; border: 1px solid rgba(6,214,160,0.4); }
-.badge-owner { background: rgba(78,205,196,0.2); color: #4ECDC4; border: 1px solid rgba(78,205,196,0.4); }
+.badge-verified { background: rgba(6,214,160,0.2); color: #10B981; border: 1px solid rgba(6,214,160,0.4); }
+.badge-owner { background: rgba(78,205,196,0.2); color: #2DD4BF; border: 1px solid rgba(78,205,196,0.4); }
 .badge-traveler { background: rgba(255,107,53,0.2); color: #FF6B35; border: 1px solid rgba(255,107,53,0.4); }
  
 .logout-btn {

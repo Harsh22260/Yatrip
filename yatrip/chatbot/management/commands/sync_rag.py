@@ -1,59 +1,68 @@
-from django.core.management.base import BaseCommand
-import os
-import time
-from datetime import datetime
-from django.apps import apps
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
-from langchain_pinecone import PineconeVectorStore
-from langchain_core.documents import Document
+"""Embed Yatrip's catalogue into the Pinecone knowledge base."""
+
+from django.core.management.base import BaseCommand, CommandError
+
+from chatbot import rag
+
 
 class Command(BaseCommand):
-    help = 'Sync Django models (Hotels, Food, Attractions) to Pinecone Vector DB'
+    help = (
+        "Sync hotels, food, attractions, rentals and transport into the "
+        "Pinecone knowledge base used by the chatbot."
+    )
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--model",
+            action="append",
+            choices=rag.CHOICES,
+            help=(
+                "Which model to index. Repeatable. Defaults to every model "
+                "(equivalent to --model all)."
+            ),
+        )
+        parser.add_argument(
+            "--recreate",
+            action="store_true",
+            help=(
+                "Drop and rebuild the Pinecone index. Required when the index "
+                "dimension no longer matches the configured embedding model."
+            ),
+        )
+        parser.add_argument(
+            "--status",
+            action="store_true",
+            help="Only report how many vectors the index currently holds.",
+        )
 
     def handle(self, *args, **options):
-        self.stdout.write(self.style.SUCCESS(f"[{datetime.now()}] Starting RAG Sync..."))
-        
+        if options["status"]:
+            total = rag.count_indexed_vectors()
+            self.stdout.write(f"Index holds {total} vector(s).")
+            return
+
         try:
-            if not os.environ.get("PINECONE_API_KEY"):
-                self.stdout.write(self.style.ERROR("Error: PINECONE_API_KEY not found in environment."))
-                return
-
-            embeddings = GoogleGenerativeAIEmbeddings(
-                model="models/text-embedding-004",
-                google_api_key=os.environ.get("GEMINI_API_KEY"),
+            counts = rag.sync(
+                options["model"] or ["all"], recreate=options["recreate"]
             )
-            vs = PineconeVectorStore(
-                index_name=os.environ.get("PINECONE_INDEX_NAME", "yatrip-rag"),
-                embedding=embeddings,
-                pinecone_api_key=os.environ.get("PINECONE_API_KEY"),
+        except rag.RagConfigurationError as exc:
+            raise CommandError(str(exc)) from exc
+        except Exception as exc:  # noqa: BLE001
+            raise CommandError(f"Knowledge base sync failed: {exc}") from exc
+
+        if not any(counts.values()):
+            self.stdout.write(
+                self.style.WARNING("Nothing was indexed. Checked models: " + ", ".join(counts))
             )
+            return
 
-            all_docs = []
-            
-            # Sync Hotels
-            Hotel = apps.get_model('hotels', 'Hotel')
-            for h in Hotel.objects.all():
-                content = f"Hotel: {h.name}\nDescription: {h.description}\nAddress: {h.address}\nRating: {h.rating}"
-                all_docs.append(Document(page_content=content, metadata={"source": "hotel", "id": h.id, "title": h.name}))
+        for name, count in counts.items():
+            style = self.style.SUCCESS if count else self.style.WARNING
+            self.stdout.write(f"  {name:12} {count} document(s)")
 
-            # Sync Food
-            FoodPlace = apps.get_model('food', 'FoodPlace')
-            for p in FoodPlace.objects.all():
-                content = f"Food Place: {p.name}\nCuisine: {p.cuisine}\nAddress: {p.address}, {p.city}\nDescription: {p.description}"
-                all_docs.append(Document(page_content=content, metadata={"source": "food", "id": p.id, "title": p.name}))
-
-            # Sync Attractions
-            Attraction = apps.get_model('attractions', 'Attraction')
-            for a in Attraction.objects.all():
-                content = f"Attraction: {a.name}\nAddress: {a.address}, {a.city}\nDescription: {a.description}"
-                all_docs.append(Document(page_content=content, metadata={"source": "attraction", "id": a.id, "title": a.name}))
-
-            if all_docs:
-                self.stdout.write(f"Upserting {len(all_docs)} documents to Pinecone...")
-                vs.add_documents(all_docs)
-                self.stdout.write(self.style.SUCCESS("Sync successful!"))
-            else:
-                self.stdout.write("No data found to sync.")
-
-        except Exception as e:
-            self.stdout.write(self.style.ERROR(f"Sync failed: {e}"))
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"Indexed {sum(counts.values())} document(s); "
+                f"index now holds {rag.count_indexed_vectors()} vector(s)."
+            )
+        )

@@ -1,5 +1,5 @@
 .rfp-page {
-  min-height: 100vh;
+  min-height: calc(100dvh - var(--nav-h));
   background: #fdf2f2;
   padding: 40px 20px;
   font-family: 'Inter', sans-serif;
@@ -17,7 +17,7 @@
 .rfp-back {
   background: none;
   border: none;
-  color: #991b1b;
+  color: var(--bad-400);
   cursor: pointer;
   font-weight: 600;
   margin-bottom: 12px;
@@ -25,17 +25,17 @@
 
 .rfp-header h1 {
   font-size: 2rem;
-  color: #7f1d1d;
+  color: var(--bad-400);
   margin: 0 0 6px;
 }
 
 .rfp-header p {
-  color: #991b1b;
+  color: var(--bad-400);
   opacity: 0.8;
 }
 
 .rfp-card {
-  background: #fff;
+  background: var(--bg-card-solid);
   border-radius: 24px;
   padding: 32px;
   box-shadow: 0 10px 30px rgba(127, 29, 29, 0.05);
@@ -48,7 +48,7 @@
 
 .rfp-section h3 {
   font-size: 1.1rem;
-  color: #991b1b;
+  color: var(--bad-400);
   margin-bottom: 16px;
   border-bottom: 2px solid #fef2f2;
   padding-bottom: 8px;
@@ -62,7 +62,7 @@
   display: block;
   font-size: 0.85rem;
   font-weight: 700;
-  color: #b91c1c;
+  color: var(--bad-400);
   margin-bottom: 8px;
 }
 
@@ -80,7 +80,7 @@
 
 .rfp-field input:focus {
   border-color: #ef4444;
-  background: #fff;
+  background: var(--bg-card-solid);
   box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
 }
 
@@ -118,9 +118,31 @@
   box-shadow: 0 4px 14px rgba(239, 68, 68, 0.4);
 }
 
-.rfp-submit-btn:hover {
+.rfp-submit-btn:hover:not(:disabled) {
   background: #dc2626;
   transform: translateY(-2px);
+}
+
+.rfp-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: progress;
+  transform: none;
+}
+
+.rfp-error {
+  margin: 20px 0 0;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+  font-size: 0.9rem;
+}
+
+.success .rfp-submit-btn {
+  width: auto;
+  margin-top: 24px;
+  padding: 12px 28px;
 }
 
 .success .rfp-card {

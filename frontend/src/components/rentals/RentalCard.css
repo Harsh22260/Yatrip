@@ -1,14 +1,14 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@400;500;600&display=swap');
 
 .rc-card {
-  background: #fff;
+  background: var(--bg-card-solid);
   border-radius: 18px;
   overflow: hidden;
   box-shadow: 0 2px 14px rgba(0,0,0,0.07);
   cursor: pointer;
   transition: transform 0.22s ease, box-shadow 0.22s ease;
-  font-family: 'DM Sans', sans-serif;
-  border: 1px solid #f1f5f9;
+  font-family: var(--font-sans);
+  border: 1px solid var(--line);
 }
 
 .rc-card:hover {
@@ -21,7 +21,7 @@
   position: relative;
   height: 200px;
   overflow: hidden;
-  background: #f1f5f9;
+  background: var(--bg-inset);
 }
 
 .rc-image {
@@ -63,7 +63,7 @@
 
 .rc-img-arrow.left { left: 10px; }
 .rc-img-arrow.right { right: 10px; }
-.rc-img-arrow:hover { background: #fff; }
+.rc-img-arrow:hover { background: var(--bg-card-solid); }
 
 /* Dots */
 .rc-img-dots {
@@ -88,7 +88,7 @@
 }
 
 .rc-dot.active {
-  background: #fff;
+  background: var(--bg-card-solid);
   width: 18px;
   border-radius: 3px;
 }
@@ -110,7 +110,7 @@
   position: absolute;
   top: 12px;
   right: 12px;
-  background: #15803d;
+  background: var(--ok-500);
   color: #fff;
   font-size: 0.72rem;
   font-weight: 600;
@@ -134,7 +134,7 @@
 }
 
 .rc-price {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 1.3rem;
   font-weight: 700;
   color: #fff;
@@ -153,10 +153,10 @@
 }
 
 .rc-name {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 1.05rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text);
   margin: 0;
   white-space: nowrap;
   overflow: hidden;
@@ -170,7 +170,7 @@
   letter-spacing: -1px;
 }
 
-.rc-address { font-size: 0.8rem; color: #64748b; margin: 0 0 10px; }
+.rc-address { font-size: 0.8rem; color: var(--text-muted); margin: 0 0 10px; }
 
 /* Rooms */
 .rc-rooms { margin-bottom: 10px; }
@@ -181,10 +181,10 @@
   padding: 4px 10px;
   border-radius: 8px;
   background: #dcfce7;
-  color: #15803d;
+  color: var(--ok-400);
 }
 
-.rc-rooms-badge.full { background: #fee2e2; color: #b91c1c; }
+.rc-rooms-badge.full { background: #fee2e2; color: var(--bad-400); }
 
 /* Amenities */
 .rc-amenities {
@@ -197,18 +197,18 @@
 .rc-amenity-chip {
   font-size: 0.72rem;
   padding: 3px 8px;
-  background: #f1f5f9;
+  background: var(--bg-inset);
   border-radius: 6px;
-  color: #475569;
+  color: var(--text-muted);
   font-weight: 500;
 }
 
 .rc-amenity-more {
   font-size: 0.72rem;
   padding: 3px 8px;
-  background: #e2e8f0;
+  background: var(--bg-hover);
   border-radius: 6px;
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 /* Button */
@@ -219,7 +219,7 @@
   border: none;
   padding: 11px;
   border-radius: 10px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-sans);
   font-size: 0.88rem;
   font-weight: 600;
   cursor: pointer;
@@ -227,6 +227,6 @@
 }
 
 .rc-btn:hover {
-  background: #9333ea;
+  background: var(--brand-500);
   transform: translateY(-1px);
 }

@@ -1,5 +1,5 @@
 .rap-page {
-  min-height: 100vh;
+  min-height: calc(100dvh - var(--nav-h));
   background: #fdfaf5;
   padding: 40px 20px;
   font-family: 'Inter', sans-serif;
@@ -25,20 +25,20 @@
 
 .rap-header h1 {
   font-size: 2rem;
-  color: #1a1a2e;
+  color: var(--text);
   margin: 0 0 6px;
 }
 
 .rap-header p {
-  color: #7a7a9a;
+  color: var(--text-muted);
 }
 
 .rap-card {
-  background: #fff;
+  background: var(--bg-card-solid);
   border-radius: 20px;
   padding: 32px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-  border: 1px solid #e8e8f0;
+  border: 1px solid var(--line);
 }
 
 .rap-section {
@@ -47,7 +47,7 @@
 
 .rap-section h3 {
   font-size: 1.1rem;
-  color: #1a1a2e;
+  color: var(--text);
   margin-bottom: 16px;
   border-bottom: 1px solid #e8e8f0;
   padding-bottom: 8px;
@@ -61,7 +61,7 @@
   display: block;
   font-size: 0.85rem;
   font-weight: 700;
-  color: #1a1a2e;
+  color: var(--text);
   margin-bottom: 6px;
 }
 

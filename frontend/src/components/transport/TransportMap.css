@@ -3,33 +3,199 @@
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 4px 24px rgba(0,0,0,0.12);
-  border: 1px solid #e0e7ff;
+  border: 1px solid var(--line);
 }
 
 .tm-map {
   width: 100%;
   height: 100%;
+  /* The OSM raster tiles are light, which left a glaring white rectangle in an
+     otherwise dark page. The filter inverts the raster and flips it back so
+     water stays dark and roads stay readable -- no API key or paid dark
+     provider needed. Marker icons are excluded or they turn into negatives. */
+  filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.9) saturate(0.75);
 }
+
+.tm-map .leaflet-tile-pane,
+.tm-map .leaflet-overlay-pane {
+  /* Leaflet applies the filter to .tm-map, which also darkens the coloured
+     markers drawn into the overlay pane. Pull just the tiles back up so the
+     saffron/blue pins keep their identity. */
+  filter: none;
+}
+
+.tm-map .leaflet-marker-icon,
+.tm-map .leaflet-marker-shadow {
+  filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.9) saturate(0.75);
+}
+
+/* Leaflet's own chrome ships light, so the zoom buttons and the attribution
+   strip were bright grey blocks over the darkened map. */
+.tm-map .leaflet-control-zoom a {
+  background: var(--bg-card-solid);
+  color: var(--text);
+  border-color: var(--line-strong);
+}
+
+.tm-map .leaflet-control-zoom a:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
+.tm-map .leaflet-control-attribution {
+  background: rgba(10, 17, 32, 0.82);
+  color: var(--text-muted);
+}
+
+.tm-map .leaflet-control-attribution a { color: var(--brand-400); }
 
 .tm-attribution {
   position: absolute;
   bottom: 8px;
   left: 10px;
   font-size: 0.68rem;
-  color: #6b7280;
-  background: rgba(255,255,255,0.85);
+  color: var(--text-muted);
+  background: rgba(10, 17, 32, 0.82);
   padding: 2px 6px;
   border-radius: 4px;
   z-index: 999;
 }
 
-.tm-attribution a { color: #6366f1; text-decoration: none; }
+.tm-attribution a { color: var(--brand-400); text-decoration: none; }
 
 /* Leaflet popup custom style */
 .leaflet-popup-content-wrapper {
   border-radius: 12px !important;
-  box-shadow: 0 6px 24px rgba(0,0,0,0.15) !important;
-  border: none !important;
+  background: var(--bg-card-solid) !important;
+  color: var(--text) !important;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.45) !important;
+  border: 1px solid var(--line-strong) !important;
 }
 
+.leaflet-popup-content { color: var(--text) !important; }
+
 .leaflet-popup-tip-container { display: none; }
+
+/* --- Smart map controls --------------------------------- */
+.tm-wrapper {
+  position: relative;
+}
+
+.tm-map {
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
+  z-index: 1;
+}
+
+.tm-controls {
+  position: absolute;
+  top: 0.85rem;
+  right: 0.85rem;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.tm-btn {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background: var(--bg-card-solid);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.18);
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.tm-btn:hover:not(:disabled) {
+  background: var(--bg-inset);
+  transform: translateY(-1px);
+}
+
+.tm-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.tm-btn--on {
+  background: var(--brand-600);
+  border-color: #1d4ed8;
+  transform: translateY(0);
+}
+
+/* Heading readout while navigating */
+.tm-nav-hud {
+  position: absolute;
+  top: 0.85rem;
+  left: 0.85rem;
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.7rem;
+  background: rgba(15, 23, 42, 0.85);
+  border-radius: 999px;
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  backdrop-filter: blur(4px);
+}
+
+.tm-nav-hud__arrow {
+  display: inline-block;
+  transition: transform 0.4s ease;
+}
+
+/* Shown when Leaflet or the tiles cannot load. */
+.tm-fallback {
+  position: absolute;
+  inset: 0;
+  z-index: 600;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 1.5rem;
+  text-align: center;
+  background: var(--bg-raised);
+  border-radius: 14px;
+}
+
+.tm-fallback strong {
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.tm-fallback p {
+  margin: 0;
+  max-width: 34ch;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.tm-fallback__hint {
+  font-size: 0.78rem !important;
+  color: #94a3b8 !important;
+}
+
+.tm-fallback button {
+  margin-top: 0.5rem;
+  padding: 0.45rem 1.1rem;
+  background: var(--brand-600);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+}

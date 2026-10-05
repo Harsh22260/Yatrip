@@ -1,507 +1,578 @@
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap');
- 
-:root {
-  --orange: #FF6B35;
-  --teal:   #4ECDC4;
-  --purple: #7C5CBF;
-  --dark:   #0d0d1a;
-  --nav-h:  68px;
-}
- 
-/* ── Base ──────────────────────────────────── */
+/* ═══ Navbar ═══════════════════════════════════════════════════════════════
+   Sticky glass bar.
+
+   This used to be position:fixed. That is why every page had to add its own
+   --nav-h of top padding to avoid hiding under the bar, and because those
+   paddings were added inconsistently the content ended up either overlapped or
+   pushed down by 92-320px depending on the page.
+
+   sticky keeps the bar pinned to the top while scrolling, but it still occupies
+   real space in the flow. So the bar reserves exactly its own height on every
+   route, no page needs a clearance hack, and nothing can slide under it. */
+
 .navbar {
-  position: fixed;
-  top: 0; left: 0; right: 0;
+  position: sticky;
+  top: 0;
   z-index: 1000;
   height: var(--nav-h);
-  width: 100%;
-  transition: background 0.4s ease, box-shadow 0.4s ease;
+  /* Always the solid glass treatment. A transparent bar only ever worked while
+     the bar floated over the landing hero; with sticky it would instead float
+     over the page background and the pale links would be unreadable. */
+  background: var(--glass);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  border-bottom: 1px solid var(--line);
+  box-shadow: var(--shadow-md);
+  transition: background var(--t-base) var(--ease),
+              box-shadow var(--t-base) var(--ease),
+              border-color var(--t-base) var(--ease);
 }
- 
-.navbar--transparent {
-  background: rgba(13,13,26,0.82);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-}
- 
-.navbar--solid {
-  background: rgba(13,13,26,0.97);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  box-shadow: 0 2px 40px rgba(0,0,0,0.5);
-  border-bottom: 1px solid rgba(255,255,255,0.07);
-}
- 
+
+/* No max-width here.
+
+   The bar was capped at --max-w (1240px) and then split into three
+   space-between columns. On a 1440px screen that left ~414px of dead air
+   between the logo and the links, and on 1920px it left 340px of empty bar at
+   each edge -- which read as the header and footer wasting the width.
+
+   A navbar is edge-anchored furniture: the logo belongs at the left gutter and
+   the account controls at the right one. Only the horizontal padding should
+   scale, so the row spans the viewport and grows to fit whatever it holds. */
 .navbar__inner {
-  width: 100%;
   height: 100%;
-  padding: 0 40px;
+  width: 100%;
+  padding-inline: clamp(1rem, 4vw, 2.5rem);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--sp-5);
 }
- 
-/* ── Logo ──────────────────────────────────── */
+
 .navbar__logo {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  text-decoration: none;
-  flex-shrink: 0;
+  flex: none;
+  transition: filter var(--t-base) var(--ease);
 }
- 
-.logo-plane {
-  font-size: 22px;
-  display: inline-block;
-  animation: planeBob 3s ease-in-out infinite;
-}
- 
-@keyframes planeBob {
-  0%,100% { transform: translateY(0) rotate(-10deg); }
-  50%      { transform: translateY(-4px) rotate(-10deg); }
-}
- 
-.logo-text {
-  font-family: 'Syne', sans-serif;
-  font-size: 24px;
-  font-weight: 800;
-  color: #fff;
-  letter-spacing: -0.5px;
-}
- 
-.logo-accent { color: var(--orange); }
- 
-/* ── Right group ───────────────────────────── */
+
 .navbar__right-group {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--sp-4);
+  margin-left: auto;
 }
- 
-/* ── Nav Links ─────────────────────────────── */
+
+/* ── Links ─────────────────────────────────────────────────────────────── */
 .navbar__links {
   display: flex;
   align-items: center;
-  gap: 2px;
-  list-style: none;
-  margin: 0;
-  padding: 0;
+  /* Was 0.15rem, which left the six primary links reading as one run of text.
+     Each .nav-link also carries 0.72rem of inline padding, so the visible gap
+     between two chips is this value plus 1.44rem. */
+  gap: 0.6rem;
 }
- 
+
 .nav-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+  padding: 0.5rem 0.72rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-soft);
+  transition: color var(--t-base) var(--ease), background-color var(--t-base) var(--ease);
+}
+
+.nav-link__icon {
+  color: var(--text-faint);
+  transition: color var(--t-base) var(--ease), transform var(--t-base) var(--ease-spring);
+}
+
+.nav-link:hover {
+  color: var(--text);
+  background: var(--bg-hover);
+}
+
+.nav-link:hover .nav-link__icon {
+  color: var(--brand-400);
+  transform: translateY(-1px);
+}
+
+/* Active pill. The underline the old bar used was easy to miss against a
+   photograph, so the whole chip now lights up. */
+.nav-link--active {
+  color: var(--text);
+  background: rgba(255, 107, 53, 0.14);
+}
+
+.nav-link--active .nav-link__icon {
+  color: var(--brand-400);
+}
+
+/* ── Auth buttons ──────────────────────────────────────────────────────── */
+.auth-btns {
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 7px 12px;
-  border-radius: 9px;
-  text-decoration: none;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 13.5px;
-  font-weight: 500;
-  color: rgba(95, 80, 80, 0.342);
-  transition: all 0.2s;
-  white-space: nowrap;
+  gap: 0.5rem;
+  margin-left: 0.4rem;
 }
- 
-.nav-link__icon { font-size: 14px; }
- 
-.nav-link:hover {
-  color: #fff;
-  background: rgba(255,255,255,0.08);
-}
- 
-.nav-link--active {
-  color: var(--orange) !important;
-  background: rgba(255,107,53,0.12) !important;
-}
- 
-/* ── Auth ──────────────────────────────────── */
-.navbar__auth { display: flex; align-items: center; gap: 10px; margin-left: 8px; }
- 
-.auth-btns { display: flex; gap: 8px; align-items: center; }
- 
-.btn-ghost {
-  padding: 8px 16px;
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.2);
-  color: rgba(255,255,255,0.85);
-  text-decoration: none;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 13.5px;
-  font-weight: 500;
-  transition: all 0.2s;
-}
-.btn-ghost:hover { background: rgba(255,255,255,0.1); color: #fff; }
- 
+
+.btn-ghost,
 .btn-solid {
-  padding: 8px 18px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, var(--orange), #ff8c42);
-  color: #fff;
-  text-decoration: none;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 13.5px;
+  /* `line-height: 1` plus 0.52rem padding made these 31px tall inside a 72px
+     bar -- measured as a 108x31 hit area on a 390px phone, well under the 40px
+     touch floor. min-height + flex centring keeps the pill look and fixes the
+     target without changing the visual weight. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0.52rem 1.1rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.88rem;
   font-weight: 600;
-  box-shadow: 0 4px 14px rgba(255,107,53,0.4);
-  transition: all 0.2s;
+  line-height: 1;
+  transition: all var(--t-base) var(--ease);
   white-space: nowrap;
 }
-.btn-solid:hover { transform: translateY(-1px); box-shadow: 0 6px 22px rgba(255,107,53,0.55); }
- 
-/* ── Profile Trigger ───────────────────────── */
-.profile-wrap { position: relative; }
- 
+
+.btn-ghost {
+  color: var(--text-soft);
+  border: 1px solid var(--line-strong);
+  background: var(--bg-inset);
+}
+
+.btn-ghost:hover {
+  color: var(--text);
+  border-color: var(--brand-400);
+  background: rgba(255, 107, 53, 0.12);
+}
+
+.btn-solid {
+  color: #fff;
+  background: linear-gradient(135deg, var(--brand-400), var(--brand-600));
+  box-shadow: var(--shadow-brand);
+}
+
+.btn-solid:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-brand-lg);
+}
+
+/* ── Profile ───────────────────────────────────────────────────────────── */
+.profile-wrap {
+  position: relative;
+}
+
 .profile-trigger {
   display: flex;
   align-items: center;
-  gap: 10px;
-  background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(255,255,255,0.13);
-  border-radius: 50px;
-  padding: 6px 14px 6px 6px;
-  cursor: pointer;
-  transition: all 0.2s;
+  gap: 0.55rem;
+  /* 40px, matching .btn-solid/.btn-ghost. At 0.3rem padding the trigger was
+     only 38px tall with a 32px avatar inside it. */
+  min-height: 40px;
+  padding: 0.3rem 0.6rem 0.3rem 0.3rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--line-strong);
+  background: var(--bg-inset);
+  transition: all var(--t-base) var(--ease);
 }
+
 .profile-trigger:hover,
 .profile-trigger--open {
-  background: rgba(255,255,255,0.12);
-  border-color: rgba(255,107,53,0.4);
+  border-color: var(--brand-400);
+  background: var(--bg-hover);
 }
- 
-.profile-avatar-circle {
-  width: 34px; height: 34px;
+
+.profile-avatar-circle,
+.dropdown-avatar,
+.mobile-avatar {
+  display: grid;
+  place-items: center;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--orange), var(--teal));
-  display: flex; align-items: center; justify-content: center;
-  font-family: 'Syne', sans-serif;
-  font-size: 15px;
   font-weight: 700;
   color: #fff;
-  flex-shrink: 0;
-  box-shadow: 0 2px 10px rgba(255,107,53,0.4);
+  background: linear-gradient(135deg, var(--brand-400), var(--brand-700));
+  flex: none;
 }
- 
+
+.profile-avatar-circle {
+  width: 32px;
+  height: 32px;
+  font-size: 0.85rem;
+}
+
 .profile-trigger-info {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 1px;
-}
- 
-.profile-trigger-name {
-  font-family: 'DM Sans', sans-serif;
-  font-size: 13px;
-  font-weight: 600;
-  color: #fff;
-  line-height: 1;
-}
- 
-.profile-trigger-role {
-  font-size: 10.5px;
-  color: rgba(255,255,255,0.45);
-  line-height: 1;
-}
- 
-.chevron {
-  font-size: 13px;
-  color: rgba(255,255,255,0.5);
-  transition: transform 0.25s;
-  margin-left: 2px;
-}
-.chevron--up { transform: rotate(180deg); }
- 
-/* ── Profile Dropdown ──────────────────────── */
-.profile-dropdown {
-  position: absolute;
-  top: calc(100% + 12px);
-  right: 0;
-  width: 290px;
-  background: rgba(15,14,28,0.97);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 18px;
-  padding: 8px;
-  box-shadow: 0 24px 60px rgba(0,0,0,0.6);
-  animation: dropDown 0.22s cubic-bezier(0.22,1,0.36,1);
-  z-index: 100;
-}
- 
-@keyframes dropDown {
-  from { opacity: 0; transform: translateY(-10px) scale(0.97); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
-}
- 
-/* Dropdown Header */
-.dropdown-header {
-  display: flex;
-  align-items: center;
-  gap: 13px;
-  padding: 14px 14px 10px;
-}
- 
-.dropdown-avatar {
-  width: 52px; height: 52px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--orange), var(--teal));
-  display: flex; align-items: center; justify-content: center;
-  font-family: 'Syne', sans-serif;
-  font-size: 20px;
-  font-weight: 700;
-  color: #fff;
-  flex-shrink: 0;
-  box-shadow: 0 4px 16px rgba(255,107,53,0.45);
-}
- 
-.dropdown-userinfo { flex: 1; overflow: hidden; }
- 
-.dropdown-username {
-  font-family: 'Syne', sans-serif;
-  font-size: 15px;
-  font-weight: 700;
-  color: #fff;
-  margin: 0 0 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
- 
-.dropdown-email {
-  font-size: 12px;
-  color: rgba(255,255,255,0.45);
-  margin: 0 0 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
- 
-.dropdown-phone {
-  font-size: 12px;
-  color: rgba(255,255,255,0.4);
-  margin: 0;
-}
- 
-/* Badges */
-.dropdown-badges {
-  display: flex;
-  gap: 6px;
-  padding: 0 14px 10px;
-  flex-wrap: wrap;
-}
- 
-.dbadge {
-  padding: 3px 10px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 600;
-  font-family: 'DM Sans', sans-serif;
-}
- 
-.dbadge--green  { background: rgba(6,214,160,0.15);  color: #06D6A0; border: 1px solid rgba(6,214,160,0.3);  }
-.dbadge--blue   { background: rgba(78,205,196,0.15); color: #4ECDC4; border: 1px solid rgba(78,205,196,0.3); }
-.dbadge--orange { background: rgba(255,107,53,0.15); color: var(--orange); border: 1px solid rgba(255,107,53,0.3); }
- 
-/* Meta */
-.dropdown-meta {
-  padding: 0 14px 10px;
-  font-size: 11.5px;
-  color: rgba(255,255,255,0.35);
-}
- 
-/* Divider */
-.dropdown-divider {
-  height: 1px;
-  background: rgba(255,255,255,0.07);
-  margin: 4px 8px;
-}
- 
-/* Items */
-.dropdown-item {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  padding: 11px 14px;
-  border-radius: 11px;
-  color: rgba(255,255,255,0.75);
-  text-decoration: none;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 13.5px;
-  font-weight: 500;
-  transition: all 0.15s;
-  width: 100%;
-  background: none;
-  border: none;
-  cursor: pointer;
+  line-height: 1.25;
   text-align: left;
 }
-.dropdown-item:hover {
-  background: rgba(255,255,255,0.07);
-  color: #fff;
+
+.profile-trigger-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
- 
-.dropdown-item--purple:hover {
-  background: rgba(124,92,191,0.15);
-  color: #b794f4;
+
+.profile-trigger-role {
+  font-size: 0.68rem;
+  color: var(--brand-300);
+  font-weight: 500;
 }
- 
-.di-icon { font-size: 16px; flex-shrink: 0; }
- 
-/* Logout */
+
+.chevron {
+  color: var(--text-faint);
+  transition: transform var(--t-base) var(--ease);
+}
+
+.chevron--up {
+  transform: rotate(180deg);
+}
+
+.profile-dropdown {
+  position: absolute;
+  top: calc(100% + 0.7rem);
+  right: 0;
+  width: 285px;
+  padding: 0.9rem;
+  border-radius: var(--radius-lg);
+  background: var(--glass-strong);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--line-strong);
+  box-shadow: var(--shadow-xl);
+  animation: yt-fade-up var(--t-fast) var(--ease-out) both;
+  /* The bar is 72px tall and the dropdown can be taller than the viewport on
+     a short screen, so allow it to scroll rather than clip. */
+  max-height: min(560px, calc(100vh - var(--nav-h) - 1.5rem));
+  overflow-y: auto;
+}
+
+.dropdown-header {
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+  padding: 0.3rem 0.2rem 0.8rem;
+}
+
+.dropdown-avatar {
+  width: 44px;
+  height: 44px;
+  font-size: 1.1rem;
+}
+
+.dropdown-userinfo {
+  min-width: 0;
+}
+
+.dropdown-username {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.dropdown-email,
+.dropdown-phone {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dropdown-phone {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.1rem;
+}
+
+.dropdown-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding: 0 0.2rem 0.6rem;
+}
+
+.dbadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.dbadge--green  { background: rgba(16, 185, 129, 0.16); color: var(--ok-400); }
+.dbadge--blue   { background: rgba(139, 92, 246, 0.16); color: var(--violet-300); }
+.dbadge--orange { background: rgba(255, 107, 53, 0.16); color: var(--brand-300); }
+
+.dropdown-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0 0.2rem 0.4rem;
+  font-size: 0.74rem;
+  color: var(--text-faint);
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: var(--line);
+  margin: 0.55rem 0;
+}
+
+.dropdown-group {
+  padding: 0 0.5rem 0.3rem;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.dropdown-item,
 .dropdown-logout {
   display: flex;
   align-items: center;
-  gap: 11px;
-  padding: 11px 14px;
-  border-radius: 11px;
-  color: #ff6b6b;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 13.5px;
-  font-weight: 600;
+  gap: 0.6rem;
   width: 100%;
+  padding: 0.58rem 0.55rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.87rem;
+  font-weight: 500;
+  color: var(--text-soft);
   text-align: left;
-  transition: all 0.15s;
+  transition: background-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
 }
-.dropdown-logout:hover { background: rgba(255,80,80,0.12); }
- 
-/* ── Hamburger ─────────────────────────────── */
+
+.dropdown-item:hover,
+.dropdown-logout:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
+.dropdown-item--purple:hover {
+  background: rgba(139, 92, 246, 0.14);
+  color: var(--violet-300);
+}
+
+.dropdown-item svg,
+.dropdown-logout svg {
+  color: var(--text-faint);
+  flex: none;
+}
+
+.dropdown-item:hover svg,
+.dropdown-logout:hover svg {
+  color: var(--brand-400);
+}
+
+.dropdown-logout {
+  color: var(--bad-400);
+}
+
+.dropdown-logout svg {
+  color: var(--bad-400);
+}
+
+.dropdown-logout:hover {
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--bad-400);
+}
+
+/* ── Hamburger ─────────────────────────────────────────────────────────── */
 .hamburger {
   display: none;
   flex-direction: column;
+  justify-content: center;
   gap: 5px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 8px;
-  margin-left: 8px;
+  width: 42px;
+  height: 42px;
+  padding: 0 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line-strong);
+  background: var(--bg-inset);
 }
-.hamburger:hover { background: rgba(255,255,255,0.08); }
- 
+
 .hamburger span {
   display: block;
-  width: 22px; height: 2px;
-  background: #fff;
-  border-radius: 2px;
-  transition: all 0.3s ease;
-}
- 
-.hamburger--open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
-.hamburger--open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
-.hamburger--open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
- 
-/* ── Mobile Drawer ─────────────────────────── */
-.mobile-drawer {
-  position: fixed;
-  top: 0; right: 0;
-  width: 300px;
-  height: 100vh;
-  background: rgba(13,13,26,0.98);
-  backdrop-filter: blur(30px);
-  z-index: 999;
-  transform: translateX(100%);
-  transition: transform 0.35s cubic-bezier(0.22,1,0.36,1);
-  border-left: 1px solid rgba(255,255,255,0.07);
-}
-.mobile-drawer--open { transform: translateX(0); }
- 
-.mobile-drawer__inner {
-  padding: 80px 20px 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  height: 100%;
-  overflow-y: auto;
-}
- 
-.mobile-user-card {
-  display: flex;
-  align-items: center;
-  gap: 13px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 14px;
-  padding: 14px;
-  margin-bottom: 6px;
-}
- 
-.mobile-avatar {
-  width: 44px; height: 44px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--orange), var(--teal));
-  display: flex; align-items: center; justify-content: center;
-  font-family: 'Syne', sans-serif;
-  font-size: 18px;
-  font-weight: 700;
-  color: #fff;
-  flex-shrink: 0;
-}
- 
-.mobile-uname  { font-size: 14px; font-weight: 600; color: #fff; margin: 0 0 2px; }
-.mobile-uemail { font-size: 12px; color: rgba(255,255,255,0.4); margin: 0; }
- 
-.mobile-nav-link {
-  display: flex;
-  align-items: center;
-  gap: 13px;
-  padding: 13px 14px;
-  border-radius: 12px;
-  color: rgba(255,255,255,0.7);
-  text-decoration: none;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 14.5px;
-  font-weight: 500;
-  transition: all 0.2s;
-  background: none;
-  border: none;
-  cursor: pointer;
+  height: 2px;
   width: 100%;
-  text-align: left;
+  border-radius: 2px;
+  background: var(--text);
+  transition: transform var(--t-base) var(--ease), opacity var(--t-fast) var(--ease);
 }
-.mobile-nav-link:hover { background: rgba(255,255,255,0.07); color: #fff; }
-.mobile-logout { color: #ff6b6b !important; }
- 
-.mobile-divider { height: 1px; background: rgba(255,255,255,0.07); margin: 8px 0; }
- 
-.mobile-auth-btn {
-  display: block;
-  text-align: center;
-  padding: 13px;
-  border-radius: 12px;
-  text-decoration: none;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 14.5px;
-  font-weight: 600;
-  margin-top: 6px;
-  transition: all 0.2s;
-}
-.mobile-auth-btn--ghost { border: 1px solid rgba(255,255,255,0.2); color: #fff; }
-.mobile-auth-btn--ghost:hover { background: rgba(255,255,255,0.07); }
-.mobile-auth-btn--solid {
-  background: linear-gradient(135deg, var(--orange), #ff8c42);
-  color: #fff;
-  box-shadow: 0 4px 16px rgba(255,107,53,0.35);
-}
- 
+
+.hamburger--open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.hamburger--open span:nth-child(2) { opacity: 0; }
+.hamburger--open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* ── Mobile drawer ─────────────────────────────────────────────────────── */
 .drawer-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.65);
   z-index: 998;
-  backdrop-filter: blur(4px);
+  background: rgba(4, 8, 16, 0.6);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  animation: yt-fade-in var(--t-base) var(--ease) both;
 }
- 
-/* ── Responsive ────────────────────────────── */
-@media (max-width: 1024px) {
-  .navbar__links { display: none; }
-  .auth-btns     { display: none; }
-  .profile-trigger-info { display: none; }
-  .hamburger     { display: flex; }
+
+.mobile-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+  width: min(330px, 86vw);
+  background: var(--glass-strong);
+  backdrop-filter: blur(26px);
+  -webkit-backdrop-filter: blur(26px);
+  border-left: 1px solid var(--line-strong);
+  box-shadow: var(--shadow-xl);
+  transform: translateX(100%);
+  visibility: hidden;
+  transition: transform var(--t-base) var(--ease-out), visibility var(--t-base);
 }
- 
-@media (max-width: 600px) {
-  .navbar__inner { padding: 0 20px; }
+
+.mobile-drawer--open {
+  transform: none;
+  visibility: visible;
+}
+
+.mobile-drawer__inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  /* The drawer is position:fixed and starts at y=0, so it is outside the flow
+     and the sticky navbar does not push it down. It clears the bar itself. */
+  padding: calc(var(--nav-h) + 1rem) 1.1rem 1.5rem;
+  overflow-y: auto;
+}
+
+.mobile-user-card {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.85rem;
+  border-radius: var(--radius-md);
+  background: var(--bg-inset);
+  border: 1px solid var(--line);
+}
+
+.mobile-avatar {
+  width: 40px;
+  height: 40px;
+  font-size: 1rem;
+}
+
+.mobile-uname {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.mobile-uemail {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobile-divider {
+  height: 1px;
+  background: var(--line);
+  margin: 0.85rem 0;
+}
+
+.mobile-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  padding: 0.75rem 0.8rem;
+  border-radius: var(--radius-md);
+  font-size: 0.94rem;
+  font-weight: 500;
+  color: var(--text-soft);
+  text-align: left;
+  transition: background-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+}
+
+.mobile-nav-link svg {
+  color: var(--text-faint);
+  flex: none;
+}
+
+.mobile-nav-link:hover,
+.mobile-nav-link--active {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
+.mobile-nav-link--active svg {
+  color: var(--brand-400);
+}
+
+.mobile-logout {
+  color: var(--bad-400);
+  margin-top: 0.4rem;
+}
+
+.mobile-logout svg {
+  color: var(--bad-400);
+}
+
+.mobile-auth-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding-top: 0.4rem;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────
+   The desktop link row needs roughly 620px before it starts colliding with
+   the auth cluster, so it collapses to the drawer below 1100px rather than
+   at the tablet breakpoint. */
+@media (max-width: 1100px) {
+  .navbar__links {
+    display: none;
+  }
+
+  .hamburger {
+    display: flex;
+  }
+}
+
+@media (max-width: 640px) {
+  .profile-trigger-info {
+    display: none;
+  }
+
+  .profile-trigger {
+    padding: 0.3rem;
+    border-radius: 50%;
+  }
+
+  .chevron {
+    display: none;
+  }
+
+  .auth-btns .btn-ghost {
+    display: none;
+  }
+}
+
+@media (max-width: 420px) {
+  .navbar__inner {
+    padding-inline: 0.85rem;
+  }
 }

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import useAttractions from "../../hooks/useAttractions";
+import useCurrentUser from "../../hooks/useCurrentUser";
 import AttractionCard from "../../components/attractions/AttractionCard";
 import CategoryFilter from "../../components/attractions/CategoryFilter";
 import { SORT_OPTIONS, RATING_OPTIONS, FEE_OPTIONS } from "../../utils/attractionHelpers";
@@ -18,10 +19,11 @@ export default function AttractionsListPage() {
   const [viewMode, setViewMode] = useState("grid"); // grid | list
   const [showFilters, setShowFilters] = useState(false);
 
-  const token = localStorage.getItem('access_token');
-  const userStr = localStorage.getItem('user');
-  const user = userStr ? JSON.parse(userStr) : null;
-  const isBusiness = user?.is_business || user?.user_type === 'business' || user?.is_owner;
+  // The session lives in an HttpOnly cookie and the cached profile in
+  // `authService`. `localStorage.getItem('access_token')` always returned null,
+  // so the partner banner below never rendered for anyone.
+  const { user, isOwner } = useCurrentUser();
+  const isSignedIn = Boolean(user);
   const navigate = useNavigate();
 
   // Category counts from data (approximate)
@@ -52,20 +54,20 @@ export default function AttractionsListPage() {
         </div>
 
         {/* Business Banner */}
-        {token && (
+        {isSignedIn && (
           <div className="alp__business-bar">
             <div className="alp__business-info">
-              <span>🏛️ {isBusiness ? 'Business Account' : 'Partner with Yatrip'}</span>
-              <p>{isBusiness ? 'Manage your attractions' : 'Found a great place? Add it to Yatrip'}</p>
+              <span>{isOwner ? 'Business Account' : 'Partner with Yatrip'}</span>
+              <p>{isOwner ? 'Manage your attractions' : 'Found a great place? Add it to Yatrip'}</p>
             </div>
             <div className="alp__business-actions">
-              {isBusiness && (
+              {isOwner && (
                 <button className="alp__biz-btn" onClick={() => navigate('/my-attractions')}>
                   My Places
                 </button>
               )}
               <button className="alp__biz-btn primary" onClick={() => navigate('/register-attraction')}>
-                {isBusiness ? '+ Register Attraction' : 'Add Attraction'}
+                {isOwner ? '+ Register Attraction' : 'Add Attraction'}
               </button>
             </div>
           </div>

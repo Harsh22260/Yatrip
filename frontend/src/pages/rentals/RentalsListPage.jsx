@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRentals, useAmenities } from '../../hooks/useRentals';
+import useCurrentUser from '../../hooks/useCurrentUser';
 import RentalCard from '../../components/rentals/RentalCard';
 import RentalFilters from '../../components/rentals/RentalFilters';
 import { filterRentals } from '../../utils/rentalHelpers';
@@ -28,10 +29,11 @@ const RentalsListPage = () => {
   const { amenities } = useAmenities();
   const navigate = useNavigate();
 
-  const token = localStorage.getItem('access_token');
-  const userStr = localStorage.getItem('user');
-  const user = userStr ? JSON.parse(userStr) : null;
-  const isBusiness = user?.is_business || user?.user_type === 'business' || user?.is_owner;
+  // The session lives in an HttpOnly cookie and the cached profile in
+  // `authService`, so `localStorage.getItem('access_token')` always returned
+  // null and the partner banner below never rendered.
+  const { user, isOwner } = useCurrentUser();
+  const isSignedIn = Boolean(user);
 
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [sort, setSort] = useState('newest');
@@ -67,20 +69,20 @@ const RentalsListPage = () => {
       </header>
 
       {/* Business Banner */}
-      {token && (
+      {isSignedIn && (
         <div className="rlp-business-bar">
           <div className="rlp-business-info">
-            <span>🏠 {isBusiness ? 'Business Account' : 'Partner with Yatrip'}</span>
-            <p>{isBusiness ? 'Manage your rentals' : 'Have a room to rent? List it today'}</p>
+            <span>{isOwner ? 'Business Account' : 'Partner with Yatrip'}</span>
+            <p>{isOwner ? 'Manage your rentals' : 'Have a room to rent? List it today'}</p>
           </div>
           <div className="rlp-business-actions">
-            {isBusiness && (
+            {isOwner && (
               <button className="rlp-biz-btn" onClick={() => navigate('/my-rentals')}>
                 My Rentals
               </button>
             )}
             <button className="rlp-biz-btn primary" onClick={() => navigate('/register-rental')}>
-              {isBusiness ? '+ Register Rental' : 'List Your Property'}
+              {isOwner ? '+ Register Rental' : 'List Your Property'}
             </button>
           </div>
         </div>

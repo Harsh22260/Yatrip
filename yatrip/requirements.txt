@@ -1,0 +1,48 @@
+# Yatrip backend runtime dependencies.
+# Pinned to the versions the project was verified against.
+# Install with:  pip install -r requirements.txt
+
+# ── Django core + REST ────────────────────────────────────────
+Django==5.2.11
+djangorestframework==3.16.1
+djangorestframework-gis==1.2.0
+djangorestframework-simplejwt==5.5.1
+django-cors-headers==4.9.0
+django-filter==25.2
+python-dotenv==1.2.1
+
+# ── Database ─────────────────────────────────────────────────
+# PostGIS-capable driver. GDAL is not pip-installable on Windows, so
+# rasterio/GeoDjango extras are installed separately - see README.
+psycopg2-binary==2.9.11
+# Listed in INSTALLED_APPS as "pgvector.django"
+pgvector==0.4.2
+
+# ── Async tasks ──────────────────────────────────────────────
+celery==5.6.3
+redis==7.2.1
+
+# ── Media / images ───────────────────────────────────────────
+pillow==12.1.1
+
+# ── Chatbot, RAG and multi-model chain ───────────────────────
+langchain-core==1.6.6
+langgraph==1.1.10
+langchain-google-genai==4.4.0
+langchain-groq==1.1.3
+langchain-openai==1.6.6
+langchain-pinecone==0.2.13
+langchain-mcp-adapters==0.3.2
+pinecone==7.3.0
+tiktoken==0.12.0
+google-genai==2.25.0
+mcp==1.30.0
+
+# ── Open data / scraping / routing ───────────────────────────
+requests==2.32.5
+httpx==0.28.1
+beautifulsoup4==4.14.3
+duckduckgo_search==8.1.1
+
+# ── Serving ──────────────────────────────────────────────────
+uvicorn==0.46.0

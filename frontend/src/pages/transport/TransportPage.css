@@ -1,20 +1,20 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@400;500;600&display=swap');
 
 .tp-page {
-  min-height: 100vh;
-  background: #f0f0ff;
-  font-family: 'DM Sans', sans-serif;
+  min-height: calc(100dvh - var(--nav-h));
+  background: var(--bg-body);
+  font-family: var(--font-sans);
 }
 
 /* Header */
 .tp-header {
-  background: linear-gradient(135deg, #1e1b4b 0%, #6366f1 100%);
+  background: linear-gradient(135deg, var(--ink-800) 0%, var(--brand-700) 100%);
   padding: 40px 24px 32px;
   text-align: center;
 }
 
 .tp-title {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 2.4rem;
   font-weight: 700;
   color: #fff;
@@ -22,7 +22,7 @@
 }
 
 .tp-sub {
-  color: #c7d2fe;
+  color: var(--brand-200);
   margin: 0;
   font-size: 0.95rem;
 }
@@ -30,36 +30,38 @@
 /* Tabs */
 .tp-tabs {
   display: flex;
-  background: #fff;
-  border-bottom: 1px solid #e0e7ff;
+  background: var(--bg-card-solid);
+  border-bottom: 1px solid var(--line);
   padding: 0 24px;
   gap: 4px;
   position: sticky;
+  /* top:0, not --nav-h: the navbar is sticky and occupies real flow space, so
+     the tab strip parks directly beneath it instead of 72px lower. */
   top: 0;
   z-index: 50;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 .tp-tab {
   padding: 14px 20px;
   background: none;
   border: none;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-sans);
   font-size: 0.88rem;
   font-weight: 500;
-  color: #6b7280;
+  color: var(--text-muted);
   cursor: pointer;
   border-bottom: 2px solid transparent;
   transition: all 0.2s;
 }
 
 .tp-tab.active {
-  color: #6366f1;
-  border-bottom-color: #6366f1;
+  color: var(--brand-400);
+  border-bottom-color: var(--brand-400);
   font-weight: 600;
 }
 
-.tp-tab:hover:not(.active) { color: #1e1b4b; }
+.tp-tab:hover:not(.active) { color: var(--text); }
 
 /* Body */
 .tp-body {
@@ -92,16 +94,16 @@
 
 /* Selected Node */
 .tp-selected-node {
-  background: #fff;
+  background: var(--bg-card-solid);
   border-radius: 14px;
   padding: 14px;
-  border: 1px solid #e0e7ff;
+  border: 1px solid var(--line);
 }
 
 .tp-selected-title {
   font-size: 0.8rem;
   font-weight: 700;
-  color: #6b7280;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   margin: 0 0 10px;
@@ -110,34 +112,34 @@
 .tp-clear-selection {
   width: 100%;
   margin-top: 8px;
-  background: #f0f0ff;
-  border: 1px solid #e0e7ff;
-  color: #6366f1;
+  background: var(--bg-body);
+  border: 1px solid var(--line);
+  color: var(--brand-400);
   padding: 7px;
   border-radius: 8px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-sans);
   font-size: 0.8rem;
   cursor: pointer;
   transition: all 0.15s;
 }
 
 .tp-clear-selection:hover {
-  background: #6366f1;
+  background: var(--brand-500);
   color: #fff;
 }
 
 /* Legend */
 .tp-legend {
-  background: #fff;
+  background: var(--bg-card-solid);
   border-radius: 14px;
   padding: 16px;
-  border: 1px solid #e0e7ff;
+  border: 1px solid var(--line);
 }
 
 .tp-legend-title {
   font-size: 0.8rem;
   font-weight: 700;
-  color: #6b7280;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   margin: 0 0 10px;
@@ -154,7 +156,7 @@
   align-items: center;
   gap: 8px;
   font-size: 0.82rem;
-  color: #374151;
+  color: var(--text-soft);
 }
 
 .tp-legend-dot {
@@ -169,7 +171,7 @@
 }
 
 .tp-legend-user {
-  color: #3b82f6;
+  color: var(--brand-400);
   font-size: 1.2rem;
   width: 28px;
   text-align: center;
@@ -183,10 +185,10 @@
 }
 
 .tp-list-filters {
-  background: #fff;
+  background: var(--bg-card-solid);
   border-radius: 14px;
   padding: 18px;
-  border: 1px solid #e0e7ff;
+  border: 1px solid var(--line);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -196,10 +198,10 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  background: #f0f0ff;
+  background: var(--bg-body);
   border-radius: 10px;
   padding: 10px 14px;
-  border: 1.5px solid #e0e7ff;
+  border: 1.5px solid var(--line);
 }
 
 .tp-search {
@@ -207,8 +209,8 @@
   background: none;
   border: none;
   font-size: 0.9rem;
-  font-family: 'DM Sans', sans-serif;
-  color: #1e1b4b;
+  font-family: var(--font-sans);
+  color: var(--text);
   outline: none;
 }
 
@@ -221,30 +223,30 @@
 .tp-type-btn {
   padding: 7px 14px;
   border-radius: 20px;
-  border: 1.5px solid #e0e7ff;
-  background: #f0f0ff;
-  font-family: 'DM Sans', sans-serif;
+  border: 1.5px solid var(--line);
+  background: var(--bg-body);
+  font-family: var(--font-sans);
   font-size: 0.8rem;
-  color: #6b7280;
+  color: var(--text-muted);
   cursor: pointer;
   transition: all 0.15s;
 }
 
 .tp-type-btn.active,
 .tp-type-btn:hover {
-  background: #6366f1;
-  border-color: #6366f1;
+  background: var(--brand-500);
+  border-color: var(--brand-500);
   color: #fff;
 }
 
 /* Locate button */
 .tp-locate-btn {
-  background: linear-gradient(135deg, #6366f1, #818cf8);
+  background: linear-gradient(135deg, var(--brand-500), var(--brand-700));
   color: #fff;
   border: none;
   padding: 13px;
   border-radius: 12px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-sans);
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
@@ -255,8 +257,8 @@
 .tp-locate-btn:hover:not(:disabled) { opacity: 0.9; }
 
 .tp-denied {
-  background: #FFF3CD;
-  color: #856404;
+  background: rgba(251, 191, 36, 0.12);
+  color: var(--warn-400);
   padding: 12px 16px;
   border-radius: 10px;
   font-size: 0.85rem;
@@ -264,7 +266,7 @@
 
 .tp-count {
   font-size: 0.85rem;
-  color: #6b7280;
+  color: var(--text-muted);
   margin: 0;
 }
 
@@ -276,7 +278,7 @@
 }
 
 .tp-skeleton {
-  background: linear-gradient(90deg, #e0e7ff 25%, #f0f0ff 50%, #e0e7ff 75%);
+  background: linear-gradient(90deg, var(--ink-700) 25%, var(--ink-600) 50%, var(--ink-700) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.4s infinite;
   border-radius: 12px;
@@ -291,22 +293,295 @@
 .tp-error {
   text-align: center;
   padding: 40px;
-  color: #842029;
+  color: var(--bad-400);
 }
 
 .tp-error button {
   margin-left: 8px;
-  background: #6366f1;
+  background: var(--brand-500);
   color: #fff;
   border: none;
   padding: 6px 14px;
   border-radius: 6px;
   cursor: pointer;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-sans);
 }
 
 .tp-empty {
   text-align: center;
   padding: 60px;
-  color: #6b7280;
+  color: var(--text-muted);
+}
+
+/* --- Legend ----------------------------------------------
+   This block had no styles at all, so the legend rendered as
+   unstyled text and was effectively invisible. */
+.tp-legend {
+  margin-top: 1rem;
+  padding: 0.85rem 1rem;
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.tp-legend-title {
+  margin: 0 0 0.6rem;
+  color: var(--text);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tp-legend-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+}
+
+.tp-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--text-soft);
+  font-size: 0.85rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.tp-legend-dot {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border: 2px solid var(--bg-body);
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.25);
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+/* Your-location marker: a solid dot, matching the map marker. */
+.tp-legend-user {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  background: var(--brand-600);
+  border: 3px solid var(--brand-300);
+  border-radius: 50%;
+  color: #fff;
+  font-size: 0.6rem;
+  line-height: 1;
+}
+
+/* Legend counts next to each entry, and the live-location indicator. */
+.tp-legend-count {
+  margin-left: auto;
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-soft);
+  font-size: 0.68rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.tp-location-note {
+  margin: 0;
+  padding: 0.6rem 0.75rem;
+  background: rgba(251, 191, 36, 0.12);
+  border-left: 3px solid var(--warn-500);
+  border-radius: 8px;
+  color: var(--warn-400);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+/* --- Live location status + failure diagnostics ---------- */
+.tp-geo-status {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 0.75rem;
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--text-soft);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.tp-geo-status.is-live {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.45);
+  color: var(--ok-400);
+}
+
+.tp-geo-status__dot {
+  width: 9px;
+  height: 9px;
+  flex-shrink: 0;
+  background: var(--ok-500);
+  border-radius: 50%;
+  animation: tp-geo-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes tp-geo-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.55); }
+  50% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+}
+
+.tp-geo-status__btn {
+  margin-left: auto;
+  padding: 0.25rem 0.7rem;
+  background: var(--brand-600);
+  border: none;
+  border-radius: 7px;
+  color: #fff;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tp-geo-status__btn:disabled { opacity: 0.6; cursor: progress; }
+
+.tp-geo-error {
+  padding: 0.75rem 0.85rem;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.4);
+  border-left: 3px solid var(--bad-500);
+  border-radius: 10px;
+}
+
+.tp-geo-error > strong {
+  display: block;
+  color: var(--bad-400);
+  font-size: 0.82rem;
+}
+
+.tp-geo-error__title {
+  margin: 0.35rem 0 0.2rem;
+  color: var(--bad-400);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.tp-geo-error__help {
+  margin: 0;
+  color: var(--bad-400);
+  font-size: 0.77rem;
+  line-height: 1.55;
+}
+
+.tp-geo-error__url {
+  margin: 0.4rem 0 0;
+  color: var(--bad-400);
+  font-size: 0.72rem;
+}
+
+.tp-geo-error__url code {
+  padding: 0.1rem 0.3rem;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  font-size: 0.72rem;
+}
+
+.tp-geo-retry {
+  margin-top: 0.6rem;
+  width: 100%;
+  padding: 0.45rem;
+  background: var(--bad-500);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tp-geo-retry:disabled { opacity: 0.6; cursor: progress; }
+
+.tp-legend-scope {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--text-faint);
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* A zero that is scoped to the traveller's radius is information, not absence. */
+.tp-legend-count.is-zero {
+  background: rgba(239, 68, 68, 0.16);
+  color: var(--bad-400);
+}
+
+/* On-demand area import */
+.tp-load-area {
+  padding: 0.7rem 0.75rem;
+  background: rgba(255, 107, 53, 0.08);
+  border: 1px solid var(--line-brand);
+  border-radius: 10px;
+}
+
+.tp-load-area__btn {
+  width: 100%;
+  padding: 0.5rem;
+  background: var(--brand-600);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tp-load-area__btn:disabled { opacity: 0.6; cursor: progress; }
+
+.tp-load-area__hint {
+  margin: 0.45rem 0 0;
+  color: var(--brand-300);
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
+.tp-load-area__done {
+  margin: 0.4rem 0 0;
+  color: var(--ok-400);
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.tp-load-area__err {
+  margin: 0.4rem 0 0;
+  color: var(--bad-400);
+  font-size: 0.74rem;
+  line-height: 1.5;
+}
+
+.tp-direction-status {
+  padding: 0.55rem 0.7rem;
+  background: var(--bg-inset);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 0.8rem;
+}
+
+.tp-direction-status p { margin: 0; }
+
+.tp-direction-status__err { color: var(--bad-400); font-weight: 600; }
+.tp-direction-status__ok { color: var(--ok-400); font-weight: 600; }
+
+.tp-load-area__progress {
+  margin: 0.4rem 0 0;
+  color: var(--brand-300);
+  font-size: 0.78rem;
+  line-height: 1.5;
 }

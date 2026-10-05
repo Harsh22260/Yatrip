@@ -38,6 +38,10 @@ class Attraction(models.Model):
     )
     review_count = models.IntegerField(default=0)
     image_url = models.URLField(blank=True, default='')
+    # Attribution is not optional for Wikimedia/OpenStreetMap sourced photos,
+    # and an uncredited hotlink is the kind of thing that gets an app blocked,
+    # so it is stored and shown rather than discarded.
+    image_credit = models.CharField(max_length=300, blank=True, default='')
     website = models.URLField(blank=True, default='')
     phone = models.CharField(max_length=20, blank=True, default='')
     opening_hours = models.JSONField(default=dict, blank=True)

@@ -1,42 +1,90 @@
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+import { asList, request } from './api';
 
-const handle = async (res) => {
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || err.error || `HTTP ${res.status}`);
-  }
-  return res.json();
+// The food app is mounted at /api/ and its router registers the resource under
+// 'food', so the paths are /api/food/. This used to hand-roll `fetch` against a
+// hard-coded "http://localhost:8000/api", which meant no `credentials: 'include'`
+// (so the SPA was anonymous on a cross-origin API even when signed in), no CSRF
+// header on writes, and error messages that bypassed ApiError.
+const FOOD = 'food';
+
+const withQuery = (path, params) => {
+  const search = new URLSearchParams();
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') search.set(key, value);
+  });
+  const query = search.toString();
+  return query ? `${path}?${query}` : path;
 };
 
-const foodService = {
-  getAll: async (filters = {}, location = null) => {
-    const p = new URLSearchParams();
-    if (location?.lat) p.set("lat", location.lat);
-    if (location?.lon) p.set("lon", location.lon);
-    if (filters.category && filters.category !== "all") p.set("category", filters.category);
-    if (filters.cuisine)        p.set("cuisine", filters.cuisine);
-    if (filters.search)         p.set("search", filters.search);
-    if (filters.locationSearch) p.set("location_search", filters.locationSearch);
-    if (filters.isVeg !== "")   p.set("is_veg", filters.isVeg);
-    if (filters.delivery === "true") p.set("delivery", "true");
-    if (filters.minRating)      p.set("min_rating", filters.minRating);
-    if (filters.priceLevel)     p.set("price_level", filters.priceLevel);
-    if (filters.sortBy)         p.set("sort_by", filters.sortBy);
-    p.set("page",      filters.page || 1);
-    p.set("page_size", filters.pageSize || 20);
-    return handle(await fetch(`${API_BASE}/food/?${p}`));
-  },
+// ─── Public reads ────────────────────────────────────────────────────
+export const fetchFoodPlaces = async (filters = {}, location = null) =>
+  request(
+    withQuery(`${FOOD}/`, {
+      lat: location?.lat,
+      lon: location?.lon,
+      category: filters.category !== 'all' ? filters.category : '',
+      cuisine: filters.cuisine,
+      search: filters.search,
+      location_search: filters.locationSearch,
+      is_veg: filters.isVeg,
+      delivery: filters.delivery === 'true' ? 'true' : '',
+      min_rating: filters.minRating,
+      price_level: filters.priceLevel,
+      sort_by: filters.sortBy,
+      radius: filters.radius,
+      page: filters.page || 1,
+      page_size: filters.pageSize || 20,
+    })
+  );
 
-  getById:    async (id)   => handle(await fetch(`${API_BASE}/food/${id}/`)),
-  getNearby:  async (lat, lon, radius = 10, category = "all") => {
-    const p = new URLSearchParams({ lat, lon, radius });
-    if (category !== "all") p.set("category", category);
-    return handle(await fetch(`${API_BASE}/food/nearby/?${p}`));
-  },
-  getCategories: async () => handle(await fetch(`${API_BASE}/food/categories/`)),
-  getCuisines:   async () => handle(await fetch(`${API_BASE}/food/cuisines/`)),
-  getRandom:     async (count = 20) =>
-    handle(await fetch(`${API_BASE}/food/random/?count=${count}`)),
-};
+export const fetchFoodPlaceById = async (id, options = {}) =>
+  request(`${FOOD}/${id}/`, { signal: options.signal });
 
-export default foodService;
+export const fetchNearbyFood = async ({ lat, lon, radius = 10, category = 'all' } = {}) =>
+  request(
+    withQuery(`${FOOD}/nearby/`, {
+      lat,
+      lon,
+      radius,
+      category: category !== 'all' ? category : '',
+    })
+  );
+
+export const fetchFoodCategories = async () => asList(await request(`${FOOD}/categories/`));
+export const fetchFoodCuisines = async () => asList(await request(`${FOOD}/cuisines/`));
+export const fetchRandomFood = async (count = 20) =>
+  request(withQuery(`${FOOD}/random/`, { count }));
+
+// ─── Menu ────────────────────────────────────────────────────────────
+export const fetchMenuItems = async (placeId) => asList(await request(`${FOOD}/${placeId}/menu-items/`));
+
+export const createMenuItem = async (placeId, payload) =>
+  request(`${FOOD}/${placeId}/menu-items/`, { method: 'POST', body: payload });
+
+export const deleteMenuItem = async (placeId, itemId) =>
+  request(`${FOOD}/${placeId}/menu-items/${itemId}/`, { method: 'DELETE' });
+
+// ─── Business: my outlets ───────────────────────────────────────────
+export const fetchMyFoodPlaces = async () =>
+  asList(await request(withQuery(`${FOOD}/`, { mine: 'true', page_size: 100 })));
+
+export const createFoodPlace = async (payload) =>
+  request(FOOD, { method: 'POST', body: payload });
+
+export const updateFoodPlace = async (id, payload) =>
+  request(`${FOOD}/${id}/`, { method: 'PATCH', body: payload });
+
+export const deleteFoodPlace = async (id) => request(`${FOOD}/${id}/`, { method: 'DELETE' });
+
+// ─── OSM import ──────────────────────────────────────────────────────
+/**
+ * These are the only routes that hit Overpass, so they are rate limited and
+ * never run automatically: a thin area used to trigger a blocking fetch inside
+ * the browse request, which is a multi-second upstream call the traveller waits
+ * through. Call these deliberately, or let the UI offer the button.
+ */
+export const importArea = async ({ lat, lon, radius = 8 } = {}) =>
+  request(`${FOOD}/import-area/`, { method: 'POST', body: { lat, lon, radius } });
+
+export const importCity = async (query) =>
+  request(`${FOOD}/import-city/`, { method: 'POST', body: { q: query } });

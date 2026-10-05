@@ -11,7 +11,7 @@ class AttractionSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'name', 'description', 'category', 'category_display',
             'latitude', 'longitude', 'address', 'city', 'state', 'country',
-            'rating', 'review_count', 'image_url', 'website', 'phone',
+            'rating', 'review_count', 'image_url', 'image_credit', 'website', 'phone',
             'opening_hours', 'entry_fee', 'is_free', 'osm_id',
             'is_active', 'created_at', 'distance_km'
         ]

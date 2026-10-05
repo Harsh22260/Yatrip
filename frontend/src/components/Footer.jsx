@@ -1,137 +1,206 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
+import Logo from "./Logo";
+import Icon from "./Icon";
+import { allFallbackCredits } from "../utils/foodFallbackImages";
 import "./Footer.css";
 
-const LINKS = {
+const COLUMNS = {
   Explore: [
-    { label: "Hotels",      path: "/hotels" },
-    { label: "Attractions", path: "/attractions" },
-    { label: "Food",        path: "/food" },
-    { label: "Transport",   path: "/transport" },
-    { label: "Rentals",     path: "/rentals" },
+    { label: "Hotels", path: "/hotels", icon: "hotel" },
+    { label: "Attractions", path: "/attractions", icon: "landmark" },
+    { label: "Food", path: "/food", icon: "utensils" },
+    { label: "Transport", path: "/transport", icon: "bus" },
+    { label: "Rentals", path: "/rentals", icon: "car" },
+    { label: "AI Planner", path: "/chatbot", icon: "sparkles" },
   ],
   Account: [
-    { label: "Login",    path: "/login" },
-    { label: "Register", path: "/register" },
-    { label: "Profile",  path: "/profile" },
-    { label: "Bookings", path: "/bookings" },
+    { label: "Login", path: "/login", icon: "logout" },
+    { label: "Create account", path: "/register", icon: "userPlus" },
+    { label: "My bookings", path: "/my-bookings", icon: "calendar" },
+    { label: "List your property", path: "/register-hotel", icon: "building" },
   ],
-  Support: [
-    { label: "About Us",    path: "/about" },
-    { label: "Contact",     path: "/contact" },
-    { label: "Privacy",     path: "/privacy" },
-    { label: "Terms",       path: "/terms" },
+  Company: [
+    { label: "About us", path: "/about", icon: "compass" },
+    { label: "Contact", path: "/contact", icon: "mail" },
+    { label: "Privacy", path: "/privacy", icon: "shield" },
+    { label: "Terms", path: "/terms", icon: "badgeCheck" },
   ],
 };
 
+const STATS = [
+  { num: "500+", label: "Destinations" },
+  { num: "10K+", label: "Travelers" },
+  { num: "4.9", label: "Avg rating", star: true },
+];
+
+// Food photographs are bundled with the app, and several are CC BY / CC BY-SA,
+// which require attribution. Listing them here is the other half of the credit
+// shown on the card itself.
+const PHOTO_CREDITS = allFallbackCredits();
+
 export default function Footer() {
+  const [email, setEmail] = useState("");
+  const [state, setState] = useState("idle"); // idle | done | error
+
+  // There is no newsletter endpoint on the backend yet. Until one exists this
+  // validates and acknowledges locally rather than posting into the void.
+  const subscribe = (e) => {
+    e.preventDefault();
+    const ok = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim());
+    setState(ok ? "done" : "error");
+    if (ok) setEmail("");
+  };
+
   return (
     <footer className="footer">
-      {/* Wave top */}
-      <div className="footer-wave">
-        <svg viewBox="0 0 1440 80" preserveAspectRatio="none">
-          <path d="M0,40 C360,80 1080,0 1440,40 L1440,80 L0,80 Z" fill="#0d0d1a" />
+      {/* See the note on .footer-wave in Footer.css. */}
+      <div className="footer-wave" aria-hidden="true">
+        <svg viewBox="0 0 1440 90" preserveAspectRatio="none">
+          {/* Filled with the PAGE colour, not the footer colour, and sitting at
+              top:0 inside the footer. That makes it carve a curved notch out of
+              the footer's top edge: the page-coloured shape meets the page above
+              seamlessly, so the curve is the boundary between the two colours.
+              Painting the footer colour instead just redrew the footer's own
+              background and was invisible.
+
+              The trace is a single S: it leaves both ends at mid height (y=45),
+              crests at y=16 right of centre, and dips to y=74 left of centre.
+              One crest plus one trough is what makes it read as an S -- the
+              earlier path peaked once in the middle and came down at both ends,
+              which is a dome.
+
+              Direction is reversed on purpose: this path is drawn right-to-left
+              because the filled region has to sit ABOVE the curve. */}
+          <path
+            d="M0,0 L1440,0 L1440,45 C1260,45 1120,16 940,16 C760,16 620,74 440,74 C260,74 180,45 0,45 Z"
+            fill="var(--bg-body)"
+          />
         </svg>
       </div>
 
       <div className="footer__inner">
-        {/* Brand col */}
         <div className="footer-brand-col">
-          <Link to="/" className="footer-logo">
-            <span>✈</span>
-            <span>Ya<span className="footer-accent">trip</span></span>
+          <Link to="/" className="footer-logo" aria-label="Yatrip home">
+            <Logo size={42} />
           </Link>
+
           <p className="footer-tagline">
-            Discover India's finest destinations. Book hotels, explore attractions,
-            taste local cuisine & travel in comfort.
+            Hotels, food, attractions, transport and rentals across India — with an
+            AI planner that turns a rough idea into a real itinerary.
           </p>
 
-          {/* Social */}
-          <div className="footer-socials">
-            {[
-              { icon: "𝕏", label: "Twitter",   href: "#" },
-              { icon: "in", label: "LinkedIn",  href: "#" },
-              { icon: "f",  label: "Facebook",  href: "#" },
-              { icon: "▶",  label: "YouTube",   href: "#" },
-            ].map((s) => (
-              <a key={s.label} href={s.href} className="social-btn" title={s.label}>
-                {s.icon}
-              </a>
-            ))}
-          </div>
+          <ul className="footer-badges">
+            <li className="footer-badge">
+              <Icon name="shield" size={15} /> Secure bookings
+            </li>
+            <li className="footer-badge">
+              <Icon name="zap" size={15} /> Instant confirmation
+            </li>
+            <li className="footer-badge">
+              <Icon name="sparkles" size={15} /> AI trip planner
+            </li>
+          </ul>
 
-          {/* App badges */}
-          <div className="app-badges">
-            <div className="app-badge">
-              <span className="badge-icon">🍎</span>
-              <div>
-                <p className="badge-sub">Download on the</p>
-                <p className="badge-main">App Store</p>
-              </div>
-            </div>
-            <div className="app-badge">
-              <span className="badge-icon">▶</span>
-              <div>
-                <p className="badge-sub">Get it on</p>
-                <p className="badge-main">Google Play</p>
-              </div>
-            </div>
+          <div className="footer-newsletter">
+            <h4 className="footer-col-title">Trip ideas, monthly</h4>
+            <p className="newsletter-text">
+              One email a month: new destinations, seasonal guides and price drops.
+            </p>
+            <form className="newsletter-form" onSubmit={subscribe} noValidate>
+              <label htmlFor="footer-email" className="u-sr">
+                Email address
+              </label>
+              <Icon name="mail" size={16} className="newsletter-icon" />
+              <input
+                id="footer-email"
+                type="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (state !== "idle") setState("idle");
+                }}
+                placeholder="you@example.com"
+                className="newsletter-input"
+                aria-invalid={state === "error"}
+              />
+              <button type="submit" className="newsletter-btn" aria-label="Subscribe">
+                <Icon name="arrowRight" size={17} />
+              </button>
+            </form>
+            {state === "done" && (
+              <p className="newsletter-msg newsletter-msg--ok">
+                <Icon name="check" size={13} /> You are on the list.
+              </p>
+            )}
+            {state === "error" && (
+              <p className="newsletter-msg newsletter-msg--bad">
+                <Icon name="close" size={13} /> Please enter a valid email.
+              </p>
+            )}
           </div>
         </div>
 
-        {/* Link cols */}
-        {Object.entries(LINKS).map(([title, items]) => (
-          <div key={title} className="footer-link-col">
+        {Object.entries(COLUMNS).map(([title, items]) => (
+          <nav key={title} className="footer-link-col" aria-label={title}>
             <h4 className="footer-col-title">{title}</h4>
             <ul className="footer-link-list">
               {items.map((item) => (
                 <li key={item.path}>
-                  <Link to={item.path} className="footer-link">{item.label}</Link>
+                  <Link to={item.path} className="footer-link">
+                    <Icon name={item.icon} size={15} className="footer-link-icon" />
+                    {item.label}
+                  </Link>
                 </li>
               ))}
             </ul>
+          </nav>
+        ))}
+      </div>
+
+      <div className="footer-stats">
+        {STATS.map((s) => (
+          <div key={s.label} className="footer-stat">
+            <span className="stat-num">
+              {s.num}
+              {s.star && <Icon name="star" size={16} filled className="stat-star" />}
+            </span>
+            <span className="stat-label">{s.label}</span>
           </div>
         ))}
-
-        {/* Newsletter */}
-        <div className="footer-newsletter-col">
-          <h4 className="footer-col-title">Stay Updated</h4>
-          <p className="newsletter-text">
-            Get the best travel deals & destination guides in your inbox.
-          </p>
-          <div className="newsletter-form">
-            <input
-              type="email"
-              placeholder="your@email.com"
-              className="newsletter-input"
-            />
-            <button className="newsletter-btn">→</button>
-          </div>
-          <div className="footer-stats">
-            {[
-              { num: "500+", label: "Destinations" },
-              { num: "10K+", label: "Happy Travelers" },
-              { num: "4.9★", label: "Avg Rating" },
-            ].map((s) => (
-              <div key={s.label} className="footer-stat">
-                <span className="stat-num">{s.num}</span>
-                <span className="stat-label">{s.label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
 
-      {/* Bottom bar */}
       <div className="footer-bottom">
-        <p>© {new Date().getFullYear()} Yatrip. Made with ❤️ for Indian travelers.</p>
-        <div className="footer-bottom-links">
-          <Link to="/privacy">Privacy</Link>
-          <span>·</span>
-          <Link to="/terms">Terms</Link>
-          <span>·</span>
-          <Link to="/sitemap">Sitemap</Link>
-        </div>
+        <p>
+          © {new Date().getFullYear()} Yatrip. Built for Indian travellers.
+        </p>
+        <ul className="footer-bottom-links">
+          <li><Link to="/privacy">Privacy</Link></li>
+          <li><Link to="/terms">Terms</Link></li>
+          <li><Link to="/contact">Contact</Link></li>
+        </ul>
       </div>
+
+      <details className="footer-credits">
+        <summary>Photo credits</summary>
+        <p className="footer-credits-note">
+          Food cards without a photograph of the place itself show a bundled
+          photograph of that category. Place names and business data come from
+          OpenStreetMap contributors.
+        </p>
+        <ul className="footer-credits-list">
+          {PHOTO_CREDITS.map((photo) => (
+            <li key={photo.category}>
+              <a href={photo.commonsPage} target="_blank" rel="noreferrer noopener">
+                {photo.source}
+              </a>
+              <span>
+                {" "}— {photo.author}, {photo.licence}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </details>
     </footer>
   );
 }

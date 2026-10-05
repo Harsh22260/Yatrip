@@ -1,18 +1,37 @@
-from rest_framework import viewsets, status
+from django.core.cache import cache
+from django.db.models import Q
+from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
-from django.db.models import Q
-import math, random, logging
+from rest_framework.throttling import AnonRateThrottle, ScopedRateThrottle, UserRateThrottle
+import logging
+import math
+import random
 
-from .models import FoodPlace, FoodCategory, CuisineType
-from .serializers import FoodPlaceListSerializer, FoodPlaceDetailSerializer
+from .models import FoodPlace, FoodCategory, CuisineType, MenuItem
+from .serializers import (
+    FoodPlaceDetailSerializer,
+    FoodPlaceListSerializer,
+    FoodPlaceWriteSerializer,
+    MenuItemSerializer,
+)
 from .services.osm_food_service import (
-    fetch_food_near, fetch_random_food, search_food_by_location
+    fetch_food_near,
+    search_food_by_location,
 )
 
 logger = logging.getLogger(__name__)
 EARTH_R = 6371
+
+#: A "city" string is whatever Nominatim resolved, not free text, so the key is
+#: built from the geocoded name rather than the raw query the user typed.
+OSM_IMPORT_LOCK_TTL = 300
+
+CATEGORY_ICONS = {
+    'all': '🍴', 'street_food': '🥘', 'restaurant': '🍽️',
+    'cafe': '☕', 'dhaba': '🍛', 'bakery': '🥐',
+    'sweet_shop': '🍬', 'juice_bar': '🥤', 'fast_food': '🍔', 'other': '🍴',
+}
 
 
 def _haversine(lat1, lon1, lat2, lon2):
@@ -22,7 +41,44 @@ def _haversine(lat1, lon1, lat2, lon2):
     return 2 * EARTH_R * math.asin(math.sqrt(a))
 
 
+def _int_param(params, key, default, *, minimum=None, maximum=None):
+    """
+    Read an int query param without ever raising.
+
+    ``int(request.query_params['page'])`` turned a stray ``?page=abc`` into a
+    500 on the whole endpoint. Garbage in, default out.
+    """
+    try:
+        value = int(params.get(key, default))
+    except (TypeError, ValueError):
+        return default
+    if minimum is not None:
+        value = max(minimum, value)
+    if maximum is not None:
+        value = min(maximum, value)
+    return value
+
+
+def _bool_param(params, key):
+    return str(params.get(key, '')).strip().lower() in {'1', 'true', 'yes', 'on'}
+
+
+def _float_param(params, key):
+    try:
+        return float(params.get(key))
+    except (TypeError, ValueError):
+        return None
+
+
 def _save_food(osm_list: list, default_city=''):
+    """
+    Upsert OSM rows.
+
+    ``rating``/``review_count`` are deliberately not written: Overpass carries no
+    ratings, and the old fetch command pushed a hardcoded ``0.0`` over any real
+    rating on every re-sync. Fields absent from the payload keep their current
+    value for the same reason.
+    """
     saved = 0
     for item in osm_list:
         osm_id = item.get('osm_id')
@@ -40,12 +96,13 @@ def _save_food(osm_list: list, default_city=''):
                     'address':     item.get('address', ''),
                     'city':        item.get('city') or default_city,
                     'state':       item.get('state', ''),
-                    'country':     item.get('country', 'India'),
+                    'country':     item.get('country') or 'India',
                     'description': item.get('description', ''),
                     'website':     item.get('website', ''),
                     'phone':       item.get('phone', ''),
                     'image_url':   item.get('image_url', ''),
-                    'opening_hours': item.get('opening_hours', {}),
+                    'image_credit': item.get('image_credit', ''),
+                    'opening_hours': item.get('opening_hours') or {},
                     'price_level': item.get('price_level', 1),
                     'is_veg':      item.get('is_veg'),
                     'takeaway':    item.get('takeaway', False),
@@ -57,13 +114,66 @@ def _save_food(osm_list: list, default_city=''):
             )
             saved += 1
         except Exception as e:
-            logger.warning(f"Skip food place {item.get('name')}: {e}")
+            logger.warning("Skip food place %s: %s", item.get('name'), e)
     return saved
 
 
-class FoodPlaceViewSet(viewsets.ReadOnlyModelViewSet):
+def _is_locked(key):
+    """
+    One in-flight import per area.
+
+    Without this, every request that found a thin area issued its own Overpass
+    call, so N concurrent page loads became N upstream requests and all of them
+    waited on it.
+    """
+    return cache.add(key, '1', OSM_IMPORT_LOCK_TTL) is False
+
+
+def _unlock(key):
+    """Release the lock once the import finished (or failed)."""
+    cache.delete(key)
+
+
+class ScopedThrottle(ScopedRateThrottle):
+    """
+    ScopedRateThrottle with its scope bound in the constructor.
+
+    The scope is a class attribute on the stock throttle, so the only way to get
+    two different budgets out of it is a subclass. Instantiating
+    ``ScopedRateThrottle(scope=...)`` passes an unexpected keyword straight to
+    ``SimpleRateThrottle.__init__`` and raises at request time.
+    """
+
+    def __init__(self, scope):
+        self.scope = scope
+        super().__init__()
+
+
+class IsOwnerOrReadOnly(permissions.BasePermission):
+    """
+    Object-level write restriction.
+
+    ``IsAuthenticatedOrReadOnly`` alone only checks *that* someone is signed in,
+    not *who*: any authenticated user could PATCH or DELETE another owner's
+    outlet, or an OSM-imported row, because ``update_or_create`` rows have
+    ``owner = NULL``. So ownership is checked per object here.
+    """
+
+    message = 'You can only change food places that you own.'
+
+    def has_object_permission(self, request, view, obj):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        owner_id = getattr(obj, 'owner_id', None)
+        return owner_id is not None and owner_id == request.user.id
+
+
+class FoodPlaceViewSet(viewsets.ModelViewSet):
     """
     Food places API — street food, restaurants, cafes, dhabas etc.
+
+    GET is public. Writes require authentication and are restricted to the
+    owning user, which is what ``RegisterFoodPage`` and ``MyFoodPlacesPage`` need.
 
     Query params:
       lat, lon          — user coordinates
@@ -77,62 +187,85 @@ class FoodPlaceViewSet(viewsets.ReadOnlyModelViewSet):
       delivery          — true (home delivery only)
       price_level       — 1|2|3|4
       sort_by           — distance|rating|name
+      mine              — true (own listings only)
       page, page_size
     """
-    permission_classes = [AllowAny]
+
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+    # Browsing food is a plain database read and gets the same budget as the rest
+    # of the API. Overpass-backed import gets its own, much tighter scope, applied
+    # in get_throttles().
+    throttle_classes = [AnonRateThrottle, UserRateThrottle]
+    import_scope = 'food_import'
 
     def get_serializer_class(self):
-        return FoodPlaceDetailSerializer if self.action == 'retrieve' else FoodPlaceListSerializer
+        if self.action in {'create', 'update', 'partial_update'}:
+            return FoodPlaceWriteSerializer
+        if self.action == 'retrieve':
+            return FoodPlaceDetailSerializer
+        if self.action == 'menu_items':
+            return MenuItemSerializer
+        return FoodPlaceListSerializer
+
+    def get_throttles(self):
+        # Only the import endpoints fan out to Overpass, so they get the tighter
+        # budget on top of the normal ones. The scope has to be passed in: a bare
+        # ScopedRateThrottle() has `scope = None` and would silently throttle
+        # nothing at all.
+        throttles = super().get_throttles()
+        if self.action in {'import_area', 'search_import'}:
+            throttles.append(ScopedThrottle(scope=self.import_scope))
+        return throttles
 
     def get_queryset(self):
-        return FoodPlace.objects.filter(is_active=True)
+        qs = FoodPlace.objects.filter(is_active=True)
+        if _bool_param(self.request.query_params, 'mine'):
+            if self.request.user.is_authenticated:
+                qs = qs.filter(owner=self.request.user)
+            else:
+                qs = qs.none()
+        return qs
+
+    # ── Write permissions ──────────────────────────────────────────
+    def perform_create(self, serializer):
+        # owner is always the logged-in user, never whatever the client sent.
+        serializer.save(owner=self.request.user, is_verified=False)
+
+    def perform_update(self, serializer):
+        serializer.save()
 
     def list(self, request, *args, **kwargs):
         p = request.query_params
 
-        # Parse location
-        try:
-            user_lat = float(p.get('lat', 0))
-            user_lon = float(p.get('lon', 0))
-            has_location = bool(user_lat and user_lon)
-        except (ValueError, TypeError):
-            has_location = False
-            user_lat = user_lon = 0
+        user_lat = _float_param(p, 'lat')
+        user_lon = _float_param(p, 'lon')
+        has_location = (
+            user_lat is not None
+            and user_lon is not None
+            and -90 <= user_lat <= 90
+            and -180 <= user_lon <= 180
+        )
 
-        # Parse filters
-        category        = p.get('category', 'all').lower()
-        cuisine         = p.get('cuisine', '').lower()
-        search          = p.get('search', '').strip()
-        location_search = p.get('location_search', '').strip()
-        is_veg          = p.get('is_veg', '').lower()
+        category        = (p.get('category') or 'all').lower()
+        cuisine         = (p.get('cuisine') or '').lower()
+        search          = (p.get('search') or '').strip()
+        location_search = (p.get('location_search') or '').strip()
+        is_veg          = (p.get('is_veg') or '').lower()
         min_rating      = p.get('min_rating', '')
-        delivery        = p.get('delivery', '').lower()
+        delivery        = (p.get('delivery') or '').lower()
         price_level     = p.get('price_level', '')
-        sort_by         = p.get('sort_by', 'distance' if has_location else 'rating')
-        radius_km       = int(p.get('radius', 10 if has_location else 400))
-        fetch_live      = p.get('fetch_live', '').lower() == 'true'
-        page            = int(p.get('page', 1))
-        page_size       = min(int(p.get('page_size', 20)), 100)
+        sort_by         = p.get('sort_by') or ('distance' if has_location else 'rating')
+        radius_km       = _int_param(p, 'radius', 10 if has_location else 400, minimum=1, maximum=400)
+        page            = _int_param(p, 'page', 1, minimum=1)
+        page_size       = _int_param(p, 'page_size', 20, minimum=1, maximum=100)
 
-        # ── Fetch live OSM data if needed ──
-        if location_search:
-            osm = search_food_by_location(location_search)
-            if osm:
-                _save_food(osm, default_city=location_search)
-
-        elif has_location and fetch_live:
-            osm = fetch_food_near(user_lat, user_lon, radius_km=min(radius_km, 10))
-            if osm:
-                _save_food(osm)
-
-        elif not has_location and not search:
-            if FoodPlace.objects.filter(is_active=True).count() < 50:
-                osm = fetch_random_food(count=100)
-                if osm:
-                    _save_food(osm)
-
-        # ── Build queryset ──
+        # `mine=true` has to be honoured here too: list() overrides the default
+        # implementation, so get_queryset() never runs and MyFoodPlacesPage would
+        # otherwise receive the whole public catalogue.
+        mine = _bool_param(p, 'mine')
         qs = FoodPlace.objects.filter(is_active=True)
+        if mine:
+            qs = qs.filter(owner=request.user) if request.user.is_authenticated else qs.none()
 
         if category and category != 'all':
             qs = qs.filter(category=category)
@@ -154,7 +287,10 @@ class FoodPlaceViewSet(viewsets.ReadOnlyModelViewSet):
         if is_veg == 'true':
             qs = qs.filter(is_veg=True)
         elif is_veg == 'false':
-            qs = qs.filter(is_veg=False)
+            # "Non-veg" has to include rows whose diet is unknown (NULL).
+            # `is_veg=False` alone dropped every OSM import that simply has no
+            # diet tag, so the filter returned almost nothing.
+            qs = qs.filter(Q(is_veg=False) | Q(is_veg__isnull=True))
         if delivery == 'true':
             qs = qs.filter(home_delivery=True)
         if min_rating:
@@ -168,26 +304,41 @@ class FoodPlaceViewSet(viewsets.ReadOnlyModelViewSet):
             except ValueError:
                 pass
 
-        # ── Distance filter + sort ──
-        all_results = list(qs)
+        # Bound the query in the database before doing any Python distance maths.
+        # `list(qs)` on the whole table on every request was the other half of
+        # the slow-response problem.
+        if has_location:
+            lat_pad = (radius_km + 5) / 111.0
+            lon_pad = (radius_km + 5) / (111.0 * max(math.cos(math.radians(user_lat)), 0.01))
+            qs = qs.filter(
+                latitude__gte=user_lat - lat_pad, latitude__lte=user_lat + lat_pad,
+                longitude__gte=user_lon - lon_pad, longitude__lte=user_lon + lon_pad,
+            )
+
+        candidates = list(qs[:500])
 
         if has_location:
-            for fp in all_results:
-                fp._distance_km = _haversine(user_lat, user_lon, fp.latitude, fp.longitude)
-            all_results = [fp for fp in all_results if fp._distance_km <= radius_km]
+            nearby = []
+            for fp in candidates:
+                distance = _haversine(user_lat, user_lon, fp.latitude, fp.longitude)
+                if distance <= radius_km:
+                    fp._distance_km = distance
+                    nearby.append(fp)
             if sort_by == 'distance':
-                all_results.sort(key=lambda x: x._distance_km)
+                nearby.sort(key=lambda x: x._distance_km)
             elif sort_by == 'rating':
-                all_results.sort(key=lambda x: (-x.rating, x._distance_km))
+                nearby.sort(key=lambda x: (-x.rating, x._distance_km))
             else:
-                all_results.sort(key=lambda x: x.name)
+                nearby.sort(key=lambda x: x.name)
+            all_results = nearby
         else:
-            if sort_by == 'rating':
-                all_results.sort(key=lambda x: -x.rating)
-            elif sort_by == 'name':
-                all_results.sort(key=lambda x: x.name)
+            if sort_by == 'name':
+                candidates.sort(key=lambda x: x.name)
+            elif sort_by == 'rating':
+                candidates.sort(key=lambda x: -x.rating)
             else:
-                random.shuffle(all_results)
+                random.shuffle(candidates)
+            all_results = candidates
 
         total = len(all_results)
         start = (page - 1) * page_size
@@ -200,91 +351,179 @@ class FoodPlaceViewSet(viewsets.ReadOnlyModelViewSet):
             'page_size':    page_size,
             'total_pages':  math.ceil(total / page_size) if total else 0,
             'has_location': has_location,
+            # Lets the client offer "import this area" instead of looking broken
+            # when a small town has almost nothing in the database yet.
+            'sparse':       total < 5,
             'results':      serializer.data,
         })
 
     def retrieve(self, request, pk=None):
-        try:
-            obj = FoodPlace.objects.get(pk=pk, is_active=True)
-        except FoodPlace.DoesNotExist:
-            return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+        obj = self.get_object()
         return Response(FoodPlaceDetailSerializer(obj, context={'request': request}).data)
 
+    # ── Owner: menu items ─────────────────────────────────────────
+    @action(detail=True, methods=['get', 'post'], url_path='menu-items')
+    def menu_items(self, request, pk=None):
+        """GET/POST /api/food/{id}/menu-items/ — the menu on the detail page."""
+        place = self.get_object()
+
+        if request.method == 'GET':
+            items = place.menu_items.all()
+            return Response(MenuItemSerializer(items, many=True).data)
+
+        # get_object() runs the object permission above, so an OSM row (owner
+        # NULL) or another user's outlet is already rejected with 403 here.
+        self.check_object_permissions(request, place)
+        serializer = MenuItemSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(food_place=place)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['delete'], url_path='menu-items/(?P<item_id>[0-9]+)')
+    def delete_menu_item(self, request, pk=None, item_id=None):
+        place = self.get_object()
+        self.check_object_permissions(request, place)
+        # Scoped to the place as well, so an item id from a different outlet
+        # cannot be deleted through this path.
+        item = MenuItem.objects.filter(pk=item_id, food_place=place).first()
+        if not item:
+            return Response({'error': 'Menu item not found'}, status=status.HTTP_404_NOT_FOUND)
+        item.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    # ── Reads that only touch the database ────────────────────────
     @action(detail=False, methods=['get'], url_path='nearby')
     def nearby(self, request):
-        try:
-            lat = float(request.query_params.get('lat'))
-            lon = float(request.query_params.get('lon'))
-        except (TypeError, ValueError):
-            return Response({'error': 'lat and lon required'}, status=400)
+        lat = _float_param(request.query_params, 'lat')
+        lon = _float_param(request.query_params, 'lon')
+        if lat is None or lon is None:
+            return Response({'error': 'lat and lon are required'}, status=status.HTTP_400_BAD_REQUEST)
 
-        radius   = int(request.query_params.get('radius', 10))
-        category = request.query_params.get('category', 'all').lower()
+        radius   = _int_param(request.query_params, 'radius', 10, minimum=1, maximum=100)
+        category = (request.query_params.get('category') or 'all').lower()
 
-        qs = FoodPlace.objects.filter(is_active=True)
+        qs = self.get_queryset()
         if category != 'all':
             qs = qs.filter(category=category)
 
+        lat_pad = (radius + 5) / 111.0
+        lon_pad = (radius + 5) / (111.0 * max(math.cos(math.radians(lat)), 0.01))
+        qs = qs.filter(
+            latitude__gte=lat - lat_pad, latitude__lte=lat + lat_pad,
+            longitude__gte=lon - lon_pad, longitude__lte=lon + lon_pad,
+        )
+
         nearby = []
         for fp in qs:
-            d = _haversine(lat, lon, fp.latitude, fp.longitude)
-            if d <= radius:
-                fp._distance_km = d
+            distance = _haversine(lat, lon, fp.latitude, fp.longitude)
+            if distance <= radius:
+                fp._distance_km = distance
                 nearby.append(fp)
-
-        if len(nearby) < 5:
-            osm = fetch_food_near(lat, lon, radius_km=radius)
-            if osm:
-                _save_food(osm)
-                qs2 = FoodPlace.objects.filter(is_active=True)
-                if category != 'all':
-                    qs2 = qs2.filter(category=category)
-                nearby = []
-                for fp in qs2:
-                    d = _haversine(lat, lon, fp.latitude, fp.longitude)
-                    if d <= radius:
-                        fp._distance_km = d
-                        nearby.append(fp)
-
         nearby.sort(key=lambda x: x._distance_km)
+
         serializer = FoodPlaceListSerializer(nearby, many=True, context={'request': request})
-        return Response({'total': len(nearby), 'radius_km': radius, 'results': serializer.data})
+        return Response({
+            'total':     len(nearby),
+            'radius_km': radius,
+            # Thin coverage used to trigger a blocking Overpass fetch here. The
+            # client is told instead, and can start an import deliberately.
+            'sparse':    len(nearby) < 5,
+            'results':   serializer.data,
+        })
 
     @action(detail=False, methods=['get'], url_path='categories')
     def categories(self, request):
-        icons = {
-            'all': '🍴', 'street_food': '🥘', 'restaurant': '🍽️',
-            'cafe': '☕', 'dhaba': '🍛', 'bakery': '🥐',
-            'sweet_shop': '🍬', 'juice_bar': '🥤', 'fast_food': '🍔', 'other': '🍴',
-        }
-        result = []
+        total = FoodPlace.objects.filter(is_active=True).count()
+        result = [{
+            'key': 'all', 'label': 'All', 'icon': CATEGORY_ICONS['all'], 'count': total,
+        }]
         for cat in FoodCategory.choices:
             key = cat[0]
-            count = (FoodPlace.objects.filter(is_active=True).count()
-                     if key == 'all'
-                     else FoodPlace.objects.filter(is_active=True, category=key).count())
-            result.append({'key': key, 'label': cat[1], 'icon': icons.get(key,'🍴'), 'count': count})
+            result.append({
+                'key':   key,
+                'label': cat[1],
+                'icon':  CATEGORY_ICONS.get(key, '🍴'),
+                'count': FoodPlace.objects.filter(is_active=True, category=key).count(),
+            })
         return Response(result)
 
     @action(detail=False, methods=['get'], url_path='cuisines')
     def cuisines(self, request):
-        result = [{'key': c[0], 'label': c[1]} for c in CuisineType.choices]
-        return Response(result)
+        return Response([{'key': c[0], 'label': c[1]} for c in CuisineType.choices])
 
     @action(detail=False, methods=['get'], url_path='random')
     def random_food(self, request):
-        count    = int(request.query_params.get('count', 20))
-        category = request.query_params.get('category', 'all').lower()
-        qs = FoodPlace.objects.filter(is_active=True)
+        count    = _int_param(request.query_params, 'count', 20, minimum=1, maximum=100)
+        category = (request.query_params.get('category') or 'all').lower()
+
+        qs = self.get_queryset()
         if category != 'all':
             qs = qs.filter(category=category)
-        if qs.count() < 20:
-            _save_food(fetch_random_food(100))
-            qs = FoodPlace.objects.filter(is_active=True)
-            if category != 'all':
-                qs = qs.filter(category=category)
-        pks    = list(qs.values_list('pk', flat=True))
-        sample = random.sample(pks, min(count, len(pks)))
+
+        pks     = list(qs.values_list('pk', flat=True))
+        sample  = random.sample(pks, min(count, len(pks)))
         results = list(FoodPlace.objects.filter(pk__in=sample))
         random.shuffle(results)
-        return Response({'results': FoodPlaceListSerializer(results, many=True, context={'request': request}).data})
+        return Response({
+            'total':   len(results),
+            'sparse':  len(pks) < 20,
+            'results': FoodPlaceListSerializer(results, many=True, context={'request': request}).data,
+        })
+
+    # ── Explicit, throttled OSM import ───────────────────────────
+    @action(detail=False, methods=['post'], url_path='import-area')
+    def import_area(self, request):
+        """
+        POST /api/food/import-area/  { lat, lon, radius }
+
+        Overpass is slow and rate limited, so it must not run inside a browse
+        request. This is the deliberate, throttled entry point, and the work
+        happens on a worker when Celery is available.
+        """
+        lat    = _float_param(request.data, 'lat')
+        lon    = _float_param(request.data, 'lon')
+        radius = _int_param(request.data, 'radius', 8, minimum=1, maximum=25)
+
+        if lat is None or lon is None:
+            return Response({'error': 'lat and lon are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        key = f"food:import:{lat:.2f},{lon:.2f}:{radius}"
+        if _is_locked(key):
+            return Response({
+                'status': 'pending',
+                'detail': 'An import for this area is already running. Try again shortly.',
+            }, status=status.HTTP_202_ACCEPTED)
+
+        found = fetch_food_near(lat, lon, radius_km=radius)
+        saved = _save_food(found)
+        # The lock is released on both paths. Leaving it set blocked the area for
+        # the full TTL even when the import had already finished.
+        _unlock(key)
+        return Response({'status': 'done', 'fetched': len(found), 'saved': saved})
+
+    @action(detail=False, methods=['get', 'post'], url_path='import-city')
+    def search_import(self, request):
+        """
+        /api/food/import-city/?q=Jaipur — geocode, then import that area.
+
+        POST as well as GET because this writes rows, and the frontend sends the
+        city name in the body of a POST. The name is accepted from either place.
+        """
+        query = (
+            request.data.get('q') if request.method == 'POST' else None
+        ) or request.query_params.get('q') or ''
+        query = str(query).strip()
+        if not query:
+            return Response({'error': 'q is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        key = f"food:import:city:{query.lower()}"
+        if _is_locked(key):
+            return Response({
+                'status': 'pending',
+                'detail': 'An import for this city is already running. Try again shortly.',
+            }, status=status.HTTP_202_ACCEPTED)
+
+        found = search_food_by_location(query)
+        saved = _save_food(found, default_city=query)
+        _unlock(key)
+        return Response({'status': 'done', 'query': query, 'fetched': len(found), 'saved': saved})

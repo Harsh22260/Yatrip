@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import useFood from "../../hooks/useFood";
 import FoodCard from "../../components/food/FoodCard";
+import useCurrentUser from "../../hooks/useCurrentUser";
 import { FOOD_CATEGORIES, SORT_OPTIONS, PRICE_OPTIONS } from "../../utils/foodHelpers";
 import "./FoodListPage.css";
 
@@ -9,6 +10,7 @@ export default function FoodListPage() {
   const {
     foods, total, totalPages, loading, error,
     filters, userLocation, locationStatus,
+    sparse, importing, importMessage, runImport,
     requestLocation, clearLocation,
     setFilter, setDebouncedFilter, resetFilters,
     setPage, setCategory, retry,
@@ -17,10 +19,11 @@ export default function FoodListPage() {
   const [viewMode, setViewMode] = useState("grid");
   const [showFilters, setShowFilters] = useState(false);
 
-  const token = localStorage.getItem('access_token');
-  const userStr = localStorage.getItem('user');
-  const user = userStr ? JSON.parse(userStr) : null;
-  const isBusiness = user?.is_business || user?.user_type === 'business' || user?.is_owner;
+  // The session lives in an HttpOnly cookie and the cached profile in
+  // `authService`. Reading a localStorage 'access_token' here always returned
+  // null, which hid the partner banner from everyone actually signed in.
+  const { user, isOwner } = useCurrentUser();
+  const isSignedIn = Boolean(user);
   const navigate = useNavigate();
 
   return (
@@ -46,20 +49,20 @@ export default function FoodListPage() {
         </div>
 
         {/* Business Banner */}
-        {token && (
+        {isSignedIn && (
           <div className="flp__business-bar">
             <div className="flp__business-info">
-              <span>🏢 {isBusiness ? 'Business Account' : 'Partner with Yatrip'}</span>
-              <p>{isBusiness ? 'Manage your food outlets' : 'Want to list your restaurant? Join us'}</p>
+              <span>🏢 {isOwner ? 'Business Account' : 'Partner with Yatrip'}</span>
+              <p>{isOwner ? 'Manage your food outlets' : 'Want to list your restaurant? Join us'}</p>
             </div>
             <div className="flp__business-actions">
-              {isBusiness && (
+              {isOwner && (
                 <button className="flp__biz-btn" onClick={() => navigate('/my-food-places')}>
                   My Outlets
                 </button>
               )}
               <button className="flp__biz-btn primary" onClick={() => navigate('/register-food')}>
-                {isBusiness ? '+ Register Outlet' : 'List Your Restaurant'}
+                {isOwner ? '+ Register Outlet' : 'List Your Restaurant'}
               </button>
             </div>
           </div>
@@ -169,13 +172,46 @@ export default function FoodListPage() {
         </div>
       )}
 
+      {/* ══ COVERAGE / IMPORT ══
+          A thin area used to trigger a blocking Overpass fetch on every browse
+          request. Importing is now explicit and rate limited. */}
+      {!loading && !error && sparse && (
+        <div className="flp__coverage">
+          <div>
+            <strong>Not much here yet</strong>
+            <p>
+              {filters.locationSearch
+                ? `We have little coverage for “${filters.locationSearch}”.`
+                : "We have little coverage for this area."}{" "}
+              Pull the latest places from OpenStreetMap?
+            </p>
+            {importMessage && <span className="flp__coverage-msg">{importMessage}</span>}
+          </div>
+          <div className="flp__coverage-actions">
+            <button onClick={runImport} disabled={importing}>
+              {importing ? "Importing…" : "Import this area"}
+            </button>
+            <button className="ghost" onClick={resetFilters}>Reset filters</button>
+          </div>
+        </div>
+      )}
+
       {/* ══ GRID/LIST ══ */}
       {!loading && !error && foods.length === 0 ? (
         <div className="flp__empty">
           <span>🍽️</span>
           <h3>No food places found</h3>
-          <p>Try a different search, category, or location</p>
-          <button onClick={resetFilters}>Reset Filters</button>
+          <p>
+            {filters.locationSearch
+              ? `Nothing matches “${filters.locationSearch}” yet. Try importing the area.`
+              : "Try a different search, category, or location"}
+          </p>
+          <div className="flp__empty-actions">
+            <button onClick={runImport} disabled={importing}>
+              {importing ? "Importing…" : "Import this area"}
+            </button>
+            <button className="ghost" onClick={resetFilters}>Reset Filters</button>
+          </div>
         </div>
       ) : (
         <div className={`flp__grid flp__grid--${viewMode}`}>

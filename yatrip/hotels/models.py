@@ -8,6 +8,13 @@ import uuid
 
 User = settings.AUTH_USER_MODEL
 
+# How far ahead the availability calendar is generated.
+AVAILABILITY_HORIZON_DAYS = 91
+
+# Booking statuses that occupy inventory and therefore must not be ignored when
+# counting free units.
+BLOCKING_BOOKING_STATUSES = ('HELD', 'CONFIRMED', 'PENDING')
+
 
 # -----------------------------
 # 🏨 HOTEL MODEL
@@ -25,17 +32,23 @@ class Hotel(models.Model):
     def __str__(self):
         return self.name
 
-    def generate_availability(self):
-        """Auto-create 90 days of availability data for each room type"""
-        start_date = date.today()
+    def generate_availability(self, days: int = AVAILABILITY_HORIZON_DAYS):
+        """
+        Create rolling availability rows for every room type of this hotel.
+
+        Runs on hotel creation *and* whenever a room type is added later, so a
+        room type created through the API is not left with an empty calendar.
+        """
+        start_date = timezone.localdate()
         room_types = RoomType.objects.filter(hotel=self)
 
         with transaction.atomic():
             for room in room_types:
-                for i in range(91):
+                for i in range(days):
                     date_entry = start_date + timedelta(days=i)
                     Availability.objects.get_or_create(
                         room_type=room,
+                        room_unit=None,
                         date=date_entry,
                         defaults={
                             'available_units': room.total_units,
@@ -90,9 +103,16 @@ class RatePlan(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def get_final_price(self):
-        """Calculate final price after multiplier and discount"""
-        base = self.room_type.base_price * self.price_multiplier
-        return base * (1 - self.discount_percent / 100)
+        """
+        Nightly price after the multiplier and the discount.
+
+        discount_percent is a FloatField, so the arithmetic has to be done in
+        Decimal: ``Decimal * float`` raises TypeError, which turned any rate
+        plan detail request into a 500.
+        """
+        base = Decimal(self.room_type.base_price) * Decimal(self.price_multiplier)
+        discount = Decimal(str(self.discount_percent or 0))
+        return (base * (Decimal(100) - discount) / Decimal(100)).quantize(Decimal("0.01"))
 
     def __str__(self):
         return f"{self.room_type} - {self.name}"
@@ -111,7 +131,24 @@ class Availability(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = (('room_type', 'date'), ('room_unit', 'date'))
+        # The previous ``unique_together`` on ('room_type', 'date') and
+        # ('room_unit', 'date') silently did nothing for the aggregate rows we
+        # actually write: room_unit is NULL there, and in Postgres NULLs never
+        # collide in a unique index, so duplicates accumulated freely.
+        # These conditional constraints do enforce one row per shape.
+        constraints = [
+            models.UniqueConstraint(
+                fields=['room_type', 'date'],
+                condition=models.Q(room_unit__isnull=True),
+                name='uniq_availability_room_type_date',
+            ),
+            models.UniqueConstraint(
+                fields=['room_unit', 'date'],
+                condition=models.Q(room_unit__isnull=False),
+                name='uniq_availability_room_unit_date',
+            ),
+        ]
+        indexes = [models.Index(fields=['room_type', 'date'])]
 
     def __str__(self):
         target = self.room_unit or self.room_type
@@ -154,15 +191,36 @@ class Booking(models.Model):
     def save(self, *args, **kwargs):
         if self.status == 'PENDING' and not self.hold_expires_at:
             self.hold_expires_at = timezone.now() + timedelta(minutes=10)
+        if self.meta is None:
+            self.meta = {}
         super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Booking {self.id} ({self.status}) - {self.hotel.name}"
 
+    @property
+    def nights(self) -> int:
+        return max((self.check_out - self.check_in).days, 0)
+
+    def holds_inventory(self) -> bool:
+        """True while this booking must be counted as occupying rooms."""
+        return self.status in ('HELD', 'CONFIRMED')
+
     @staticmethod
-    def is_available(room_type, check_in, check_out):
+    def is_available(room_type, check_in, check_out, units: int = 1) -> bool:
+        """
+        Whether ``room_type`` has at least ``units`` free on every night.
+
+        Note this reads committed data only, so it is a pre-flight check. The
+        authoritative, race-free version is :func:`hotels.services.hold_rooms`,
+        which locks the rows. Callers that must not overbook have to use that
+        one; this helper exists for read-only screens and availability search.
+        """
+        nights = [check_in + timedelta(days=i) for i in range((check_out - check_in).days)]
+        if not nights:
+            return False
         return not Availability.objects.filter(
             room_type=room_type,
-            date__range=[check_in, check_out],
-            available_units__lte=0
-        ).exists()
+            room_unit__isnull=True,
+            date__in=nights,
+        ).filter(available_units__lt=units).exists()

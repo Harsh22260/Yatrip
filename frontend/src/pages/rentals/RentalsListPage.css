@@ -1,7 +1,7 @@
 .rlp-page {
-  min-height: 100vh;
-  background: #f8fafc;
-  font-family: 'DM Sans', sans-serif;
+  min-height: calc(100dvh - var(--nav-h));
+  background: var(--bg-body);
+  font-family: var(--font-sans);
 }
 
 /* Header */
@@ -20,7 +20,7 @@
 }
 
 .rlp-title {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 2.4rem;
   font-weight: 700;
   color: #fff;
@@ -62,7 +62,7 @@
 .rlp-business-info p {
   margin: 0;
   font-size: 0.8rem;
-  color: #94a3b8;
+  color: var(--text-faint);
 }
 
 .rlp-business-actions {
@@ -113,7 +113,7 @@
 
 .rlp-stat-num {
   display: block;
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 1.8rem;
   font-weight: 700;
   color: #fff;
@@ -165,10 +165,10 @@
 .rlp-filter-toggle {
   background: #f3e8ff;
   border: 1.5px solid #d8b4fe;
-  color: #9333ea;
+  color: var(--brand-400);
   padding: 7px 14px;
   border-radius: 8px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-sans);
   font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
@@ -176,14 +176,14 @@
 }
 
 .rlp-filter-toggle:hover {
-  background: #9333ea;
+  background: var(--brand-500);
   color: #fff;
-  border-color: #9333ea;
+  border-color: var(--brand-400);
 }
 
 .rlp-result-count {
   font-size: 0.85rem;
-  color: #64748b;
+  color: var(--text-muted);
   flex: 1;
 }
 
@@ -197,10 +197,10 @@
   padding: 7px 12px;
   border: 1.5px solid #e2e8f0;
   border-radius: 8px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-sans);
   font-size: 0.82rem;
-  color: #475569;
-  background: #fff;
+  color: var(--text-muted);
+  background: var(--bg-card-solid);
   outline: none;
   cursor: pointer;
 }
@@ -208,7 +208,7 @@
 /* View Toggle */
 .rlp-view-toggle {
   display: flex;
-  background: #f1f5f9;
+  background: var(--bg-inset);
   border-radius: 8px;
   padding: 3px;
   gap: 2px;
@@ -221,13 +221,13 @@
   border-radius: 6px;
   font-size: 1rem;
   cursor: pointer;
-  color: #94a3b8;
+  color: var(--text-faint);
   transition: all 0.15s;
 }
 
 .rlp-view-btn.active {
-  background: #fff;
-  color: #9333ea;
+  background: var(--bg-card-solid);
+  color: var(--brand-400);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 }
 
@@ -278,24 +278,24 @@
 .rlp-error {
   text-align: center;
   padding: 48px;
-  color: #b91c1c;
+  color: var(--bad-400);
 }
 
 .rlp-error button {
   margin-left: 8px;
-  background: #9333ea;
+  background: var(--brand-500);
   color: #fff;
   border: none;
   padding: 6px 14px;
   border-radius: 6px;
   cursor: pointer;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-sans);
 }
 
 .rlp-empty {
   text-align: center;
   padding: 64px;
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 .rlp-empty p {
@@ -304,12 +304,12 @@
 }
 
 .rlp-empty button {
-  background: #9333ea;
+  background: var(--brand-500);
   color: #fff;
   border: none;
   padding: 10px 24px;
   border-radius: 8px;
   cursor: pointer;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-sans);
   font-size: 0.9rem;
 }

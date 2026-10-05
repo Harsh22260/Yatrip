@@ -11,7 +11,7 @@
   text-transform: uppercase;
   letter-spacing: 0.07em;
   margin: 0 0 8px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-sans);
 }
 
 .qs-grid {
@@ -21,10 +21,10 @@
 }
 
 .qs-btn {
-  background: #fff;
+  background: var(--bg-card-solid);
   border: 1.5px solid #e0e7ff;
   color: #4338ca;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-sans);
   font-size: 0.78rem;
   font-weight: 500;
   padding: 6px 12px;

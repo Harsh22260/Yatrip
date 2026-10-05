@@ -1,14 +1,14 @@
 .rp-card {
-  background: #fff;
+  background: var(--bg-card-solid);
   border-radius: 16px;
   padding: 20px;
-  border: 1px solid #e0e7ff;
-  font-family: 'DM Sans', sans-serif;
+  border: 1px solid var(--line);
+  font-family: var(--font-sans);
   box-shadow: 0 2px 12px rgba(0,0,0,0.06);
 }
 
 .rp-title {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 1.1rem;
   color: #1e1b4b;
   margin: 0 0 16px;
@@ -24,7 +24,7 @@
   display: block;
   font-size: 0.75rem;
   font-weight: 600;
-  color: #6b7280;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   margin-bottom: 6px;
@@ -42,7 +42,7 @@
   border: 1.5px solid #e0e7ff;
   border-radius: 10px;
   font-size: 0.88rem;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-sans);
   color: #1e1b4b;
   outline: none;
   transition: border-color 0.15s;
@@ -62,7 +62,7 @@
   padding: 2px;
 }
 
-.rp-clear:hover { color: #374151; }
+.rp-clear:hover { color: var(--text); }
 
 /* Dropdown */
 .rp-dropdown {
@@ -70,7 +70,7 @@
   top: 100%;
   left: 0;
   right: 0;
-  background: #fff;
+  background: var(--bg-card-solid);
   border: 1.5px solid #e0e7ff;
   border-radius: 10px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.12);
@@ -90,13 +90,13 @@
   border: none;
   text-align: left;
   cursor: pointer;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-sans);
   font-size: 0.82rem;
-  color: #374151;
+  color: var(--text);
   transition: background 0.12s;
 }
 
-.rp-dropdown-item:hover { background: #f0f0ff; }
+.rp-dropdown-item:hover { background: var(--bg-inset); }
 .rp-dropdown-icon { flex-shrink: 0; margin-top: 1px; }
 .rp-dropdown-text { line-height: 1.4; }
 
@@ -121,7 +121,7 @@
 }
 
 .rp-swap-btn {
-  background: #f0f0ff;
+  background: var(--bg-inset);
   border: 1.5px solid #e0e7ff;
   color: #6366f1;
   width: 30px;
@@ -156,7 +156,7 @@
   border: none;
   padding: 11px;
   border-radius: 10px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-sans);
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
@@ -174,12 +174,12 @@
 }
 
 .rp-clear-btn {
-  background: #f0f0ff;
+  background: var(--bg-inset);
   border: 1.5px solid #e0e7ff;
   color: #6366f1;
   padding: 11px 16px;
   border-radius: 10px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-sans);
   font-size: 0.88rem;
   cursor: pointer;
   transition: all 0.15s;
@@ -192,7 +192,7 @@
 }
 
 .rp-error {
-  color: #842029;
+  color: var(--bad-400);
   font-size: 0.82rem;
   background: #F8D7DA;
   padding: 8px 12px;
@@ -214,7 +214,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  background: #f0f0ff;
+  background: var(--bg-inset);
   padding: 12px;
   border-radius: 10px;
 }
@@ -229,15 +229,325 @@
 
 .rp-result-label {
   font-size: 0.7rem;
-  color: #6b7280;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   font-weight: 600;
 }
 
 .rp-result-val {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 1.1rem;
   font-weight: 700;
   color: #1e1b4b;
 }
+
+/* --- Smart multi-stop route planner ---------------------- */
+.rp-card {
+  padding: 1rem;
+  background: var(--bg-card-solid);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+
+.rp-title {
+  margin: 0 0 0.75rem;
+  color: var(--text);
+  font-size: 0.98rem;
+  font-weight: 700;
+}
+
+.rp-stops {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.rp-stop {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.rp-stop__pin {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  background: #64748b;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.rp-stop__pin.is-start {
+  background: #16a34a;
+}
+
+.rp-stop__field {
+  display: flex;
+  flex: 1;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.rp-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+.rp-input:focus {
+  border-color: var(--brand-500);
+  outline: 2px solid rgba(37, 99, 235, 0.15);
+}
+
+.rp-myloc {
+  flex-shrink: 0;
+  padding: 0 0.55rem;
+  background: var(--bg-inset);
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.rp-myloc.is-on {
+  background: #dbeafe;
+  border-color: var(--brand-500);
+  color: #1d4ed8;
+  font-weight: 700;
+}
+
+.rp-ok { color: #16a34a; font-weight: 800; }
+.rp-spin { color: var(--text-muted); }
+
+.rp-remove {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--text-faint);
+  cursor: pointer;
+}
+
+.rp-remove:hover:not(:disabled) { background: #fee2e2; color: #dc2626; }
+.rp-remove:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.rp-add {
+  align-self: flex-start;
+  margin-top: 0.15rem;
+  padding: 0.3rem 0.6rem;
+  background: transparent;
+  border: 1px dashed #94a3b8;
+  border-radius: 8px;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.rp-add:hover { border-color: var(--brand-500); color: #1d4ed8; }
+
+.rp-modes {
+  display: flex;
+  gap: 0.4rem;
+  margin: 0.85rem 0 0.6rem;
+}
+
+.rp-mode {
+  flex: 1;
+  padding: 0.45rem 0.3rem;
+  background: var(--bg-raised);
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.rp-mode.is-active {
+  background: var(--brand-600);
+  border-color: #1d4ed8;
+  color: #fff;
+}
+
+.rp-go {
+  width: 100%;
+  padding: 0.6rem;
+  background: #16a34a;
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.rp-go:disabled { opacity: 0.6; cursor: not-allowed; }
+.rp-error { margin: 0.6rem 0 0; color: #dc2626; font-size: 0.8rem; }
+
+.rp-result { margin-top: 0.9rem; }
+
+.rp-result__title {
+  margin: 0 0 0.5rem;
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.rp-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rp-option {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.rp-option.is-active {
+  border-color: var(--brand-500);
+  background: #eff6ff;
+}
+
+.rp-option__icon { font-size: 1.15rem; }
+
+.rp-option__body { display: flex; flex-direction: column; gap: 0.1rem; }
+.rp-option__body strong { color: var(--text); font-size: 0.85rem; }
+.rp-option__body em { color: var(--text-muted); font-size: 0.76rem; font-style: normal; }
+
+.rp-tags { display: flex; gap: 0.25rem; }
+
+.rp-tag {
+  padding: 0.05rem 0.35rem;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.rp-tag--fastest { background: rgba(251, 191, 36, 0.12); color: #92400e; }
+.rp-tag--shortest { background: #dcfce7; color: var(--ok-400); }
+.rp-tag--recommended { background: #ede9fe; color: #5b21b6; }
+
+.rp-steps {
+  margin: 0.6rem 0 0;
+  padding-left: 1.1rem;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  line-height: 1.7;
+}
+
+/* Per-stop resolution state: ok (green), pending (amber), unresolved (red). */
+.rp-stop.is-ok .rp-stop__pin {
+  background: #16a34a;
+  color: #fff;
+}
+
+.rp-stop.is-pending .rp-stop__pin {
+  background: #f59e0b;
+}
+
+.rp-stop .rp-input:disabled {
+  background: var(--bg-inset);
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.rp-warn {
+  color: #f59e0b;
+  font-weight: 800;
+}
+
+.rp-ok,
+.rp-warn,
+.rp-spin {
+  flex-shrink: 0;
+  width: 18px;
+  text-align: center;
+}
+
+/* Show the resolved address so the user can confirm the right place. */
+.rp-resolved {
+  margin: 0.2rem 0 0 2.1rem;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+.rp-resolved__precision {
+  font-weight: 700;
+}
+
+.rp-resolved__precision.is-exact { color: #16a34a; }
+.rp-resolved__precision.is-house { color: #16a34a; }
+.rp-resolved__precision.is-street { color: #b45309; }
+.rp-resolved__precision.is-area { color: #b45309; }
+
+/* Manual stop placement, for places OpenStreetMap has not mapped. */
+.rp-pin {
+  padding: 0.15rem 0.4rem;
+  background: var(--bg-hover);
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  color: var(--text-soft);
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.rp-pin:hover { background: #cbd5e1; }
+.rp-pin.active { background: #0f172a; border-color: var(--text); color: #fff; }
+
+.rp-miss { color: var(--bad-400); font-weight: 700; }
+
+.rp-pin-banner {
+  margin: 0.5rem 0 0;
+  padding: 0.5rem 0.65rem;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 8px;
+  color: #92400e;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.rp-inline-note {
+  margin: 0.3rem 0 0;
+  padding: 0.35rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
+.rp-inline-note.is-miss { background: #fff7ed; color: #9a3412; }
+.rp-inline-note.is-error { background: rgba(239, 68, 68, 0.12); color: var(--bad-400); }
+
+.rp-inline-note.is-warn { background: #fffbeb; color: #92400e; }
+.rp-inline-note strong { font-weight: 700; }

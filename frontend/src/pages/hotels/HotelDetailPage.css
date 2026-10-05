@@ -1,7 +1,7 @@
 .hdp-page {
-  min-height: 100vh;
-  background: #f5f0ea;
-  font-family: 'DM Sans', sans-serif;
+  min-height: calc(100dvh - var(--nav-h));
+  background: var(--bg-body);
+  font-family: var(--font-sans);
 }
 
 /* Hero */
@@ -40,7 +40,7 @@
   padding: 8px 16px;
   border-radius: 8px;
   font-size: 0.85rem;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-sans);
   cursor: pointer;
   backdrop-filter: blur(4px);
   transition: background 0.2s;
@@ -67,7 +67,7 @@
 .hdp-badge.rating { background: #d4a017; color: #fff; }
 
 .hdp-hotel-name {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 2rem;
   font-weight: 700;
   margin: 0 0 6px;
@@ -87,7 +87,7 @@
 }
 
 .hdp-section-title {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 1.3rem;
   color: #1a1209;
   margin: 0 0 16px;
@@ -96,14 +96,14 @@
 }
 
 .hdp-description {
-  color: #5a5048;
+  color: var(--text-soft);
   line-height: 1.7;
   margin: 0;
   font-size: 0.95rem;
 }
 
 /* Date picker */
-.hdp-dates-section { background: #fff; border-radius: 16px; padding: 24px; }
+.hdp-dates-section { background: var(--bg-card-solid); border-radius: 16px; padding: 24px; }
 
 .hdp-dates {
   display: flex;
@@ -132,7 +132,7 @@
   border: 1.5px solid #d4c9bc;
   border-radius: 9px;
   font-size: 0.9rem;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-sans);
   color: #1a1209;
   background: #faf8f5;
   outline: none;
@@ -168,14 +168,14 @@
   text-align: center;
   padding: 80px;
   color: #7a6e62;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-sans);
 }
 
 .hdp-error {
   text-align: center;
   padding: 80px;
-  color: #842029;
-  font-family: 'DM Sans', sans-serif;
+  color: var(--bad-400);
+  font-family: var(--font-sans);
 }
 
 .hdp-error button {
@@ -187,5 +187,5 @@
   padding: 8px 20px;
   border-radius: 8px;
   cursor: pointer;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-sans);
 }

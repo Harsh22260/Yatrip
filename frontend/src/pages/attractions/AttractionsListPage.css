@@ -3,32 +3,40 @@
    ═══════════════════════════════════════════ */
 
 :root {
-  --primary: #FF6B35;
-  --primary-dk: #E55A28;
-  --secondary: #1A1A2E;
-  --surface: #FFFFFF;
-  --surface-2: #F7F7FA;
-  --border: #E8E8F0;
-  --text-main: #1A1A2E;
-  --text-muted: #7A7A9A;
-  --success: #22C55E;
-  --danger: #EF4444;
+  /* These tokens were a private light palette (#FFFFFF surfaces, #1A1A2E body
+     text) left over from when this page shipped on its own. Every rule below
+     reads them, so re-pointing them at the shared dark tokens converts the whole
+     page at once instead of touching ~40 declarations. */
+  --primary: var(--brand-500);
+  --primary-dk: var(--brand-600);
+  --secondary: var(--ink-800);
+  --surface: var(--ink-800);
+  --surface-2: var(--ink-700);
+  --border: var(--line);
+  --text-main: var(--text);
+  --text-muted: var(--text-muted);
+  --success: var(--ok-500);
+  --danger: var(--bad-500);
   --radius: 14px;
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 8px 28px rgba(0, 0, 0, 0.12);
+  /* The old values were tuned for a white page; on a dark ground a 6% black
+     shadow is invisible, so the depth comes from the border instead. */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 8px 28px rgba(0, 0, 0, 0.45);
 }
 
 .alp {
   max-width: 1400px;
   margin: 0 auto;
   padding: 0 20px 80px;
-  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-family: var(--font-sans);
   color: var(--text-main);
 }
 
 /* ── HEADER ── */
 .alp__header {
   position: sticky;
+  /* top:0, not --nav-h: the navbar is sticky and occupies real flow space, so
+     it already pushes this header down and this bar parks directly beneath it. */
   top: 0;
   z-index: 90;
   background: var(--surface);
@@ -508,7 +516,7 @@
 .alp__business-info p {
   margin: 0;
   font-size: 0.8rem;
-  color: #7a7a9a;
+  color: var(--text-muted);
 }
 
 .alp__business-actions {

@@ -1,0 +1,92 @@
+{
+  "restaurant": {
+    "file": "restaurant.jpg",
+    "bytes": 386232,
+    "width": 1200,
+    "height": 900,
+    "commons_title": "File:Interior of Agasi, Lajpat Nagar, Delhi (2025-10-04) (1).jpg",
+    "commons_page": "https://commons.wikimedia.org/wiki/File:Interior_of_Agasi,_Lajpat_Nagar,_Delhi_(2025-10-04)_(1).jpg",
+    "author": "Contrapunctus-1",
+    "licence": "CC BY-SA 4.0"
+  },
+  "fast_food": {
+    "file": "fast_food.jpg",
+    "bytes": 222414,
+    "width": 1200,
+    "height": 676,
+    "commons_title": "File:20260916 Minsk Vasilki Burger.jpg",
+    "commons_page": "https://commons.wikimedia.org/wiki/File:20260916_Minsk_Vasilki_Burger.jpg",
+    "author": "Sergey A. Demidov",
+    "licence": "CC BY 4.0"
+  },
+  "cafe": {
+    "file": "cafe.jpg",
+    "bytes": 337147,
+    "width": 1200,
+    "height": 661,
+    "commons_title": "File:Coffee shop 2 - Wellington, New Zealand.jpg",
+    "commons_page": "https://commons.wikimedia.org/wiki/File:Coffee_shop_2_-_Wellington,_New_Zealand.jpg",
+    "author": "Daderot",
+    "licence": "CC0"
+  },
+  "dhaba": {
+    "file": "dhaba.jpg",
+    "bytes": 196546,
+    "width": 1200,
+    "height": 800,
+    "commons_title": "File:Bandar Wala Dhaba on Betul Highway - panoramio.jpg",
+    "commons_page": "https://commons.wikimedia.org/wiki/File:Bandar_Wala_Dhaba_on_Betul_Highway_-_panoramio.jpg",
+    "author": "Kailash Mohankar",
+    "licence": "CC BY 3.0"
+  },
+  "bakery": {
+    "file": "bakery.jpg",
+    "bytes": 165829,
+    "width": 1200,
+    "height": 798,
+    "commons_title": "File:Loaves of Bread (Unsplash).jpg",
+    "commons_page": "https://commons.wikimedia.org/wiki/File:Loaves_of_Bread_(Unsplash).jpg",
+    "author": "Clark Young clark1",
+    "licence": "CC0"
+  },
+  "sweet_shop": {
+    "file": "sweet_shop.jpg",
+    "bytes": 183741,
+    "width": 1200,
+    "height": 900,
+    "commons_title": "File:Display of Indian Sweets Mithai in Kolkata, West Bengal.jpg",
+    "commons_page": "https://commons.wikimedia.org/wiki/File:Display_of_Indian_Sweets_Mithai_in_Kolkata,_West_Bengal.jpg",
+    "author": "Dipanker Dutta",
+    "licence": "CC BY 2.0"
+  },
+  "juice_bar": {
+    "file": "juice_bar.jpg",
+    "bytes": 307761,
+    "width": 1200,
+    "height": 900,
+    "commons_title": "File:Fruit juice stand (4080338565).jpg",
+    "commons_page": "https://commons.wikimedia.org/wiki/File:Fruit_juice_stand_(4080338565).jpg",
+    "author": "Joe Goldberg from Seattle, WA, USA",
+    "licence": "CC BY 2.0"
+  },
+  "street_food": {
+    "file": "street_food.jpg",
+    "bytes": 457852,
+    "width": 1200,
+    "height": 953,
+    "commons_title": "File:Food vendor in Jaipur.jpg",
+    "commons_page": "https://commons.wikimedia.org/wiki/File:Food_vendor_in_Jaipur.jpg",
+    "author": "Dudva",
+    "licence": "CC0"
+  },
+  "other": {
+    "file": "other.jpg",
+    "bytes": 227809,
+    "width": 1200,
+    "height": 675,
+    "commons_title": "File:Indian food thali.jpg",
+    "commons_page": "https://commons.wikimedia.org/wiki/File:Indian_food_thali.jpg",
+    "author": "Nishant113",
+    "licence": "CC BY-SA 4.0"
+  }
+}

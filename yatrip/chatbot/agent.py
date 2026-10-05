@@ -1,387 +1,349 @@
 """
-Yatrip AI Agent — LangGraph + Gemini 2.0 Flash + Multi-Tool
-============================================================
-Tools:
-1. web_search        — Tavily (real-time internet)
-2. osm_search        — OpenStreetMap Nominatim (locations)
-3. get_nearby_places — OSM Overpass API (nearby places)
-4. get_weather       — Open-Meteo (free, no key needed)
-5. yatrip_db_search  — Pinecone RAG (Yatrip local database)
+Yatrip AI Agent — LangGraph + Gemini + MCP tools
+=================================================
+
+The agent has no hardcoded tool functions. Its entire tool surface is
+discovered at runtime from the Yatrip MCP server (``yatrip/mcp_server.py``)
+through the Model Context Protocol:
+
+  catalogue  search_hotels, get_hotel_details, check_room_availability,
+             search_attractions, search_food, search_rentals,
+             find_transport_nodes, nearby_transport_nodes
+  open data  geocode_place, reverse_geocode, search_nearby_places,
+             get_weather, get_directions, web_search
+  RAG        search_knowledge_base
+
+If the MCP server cannot be reached the agent degrades to a plain LLM reply
+rather than failing the request.
 """
 
-import os
-import logging
-import requests
-from typing import Annotated, TypedDict
-from datetime import datetime
+from __future__ import annotations
 
-from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
-from langchain_core.messages import HumanMessage, AIMessage, SystemMessage, ToolMessage
-from langchain_core.tools import tool
-from langgraph.graph import StateGraph, END
-from langgraph.prebuilt import ToolNode
+import asyncio
+import base64
+import concurrent.futures
+import logging
+from datetime import datetime
+from typing import Annotated, Any, Sequence, TypedDict
+
+from django.conf import settings
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langgraph.graph import END, StateGraph
 from langgraph.graph.message import add_messages
+from langgraph.prebuilt import ToolNode
+
+from chatbot import llm, mcp_client
+from yatrip.retry import DailyQuotaExhausted, is_daily_quota_exhausted
 
 logger = logging.getLogger(__name__)
 
+# How much history to replay into the model, in message pairs.
+HISTORY_TURNS = 10
+VISION_TURNS = 8
+MAX_TOOL_ROUNDS = 8
 
-# ═══════════════════════════════════════════════════════════
-# 🛠️  TOOLS
-# ═══════════════════════════════════════════════════════════
-
-@tool
-def web_search(query: str) -> str:
-    """
-    Search the internet for real-time information using Tavily.
-    Use for: hotel reviews, travel tips, current prices, latest news,
-    tourist info, anything needing up-to-date data from the web.
-    """
-    try:
-        from tavily import TavilyClient
-        client = TavilyClient(api_key=os.environ.get("TAVILY_API_KEY", ""))
-        results = client.search(
-            query=query,
-            max_results=5,
-            search_depth="basic",
-            include_answer=True,
-        )
-        output = ""
-        if results.get("answer"):
-            output += f"**Summary:** {results['answer']}\n\n"
-
-        for r in results.get("results", [])[:4]:
-            output += f"• **{r.get('title', '')}**: {r.get('content', '')[:250]}\n"
-
-        return output.strip() or "No results found."
-    except Exception as e:
-        logger.error(f"web_search error: {e}")
-        return f"Web search failed: {str(e)}"
+# Provider selection, per-provider throttling and failover all live in
+# chatbot.llm so the model can change without touching the agent graph.
 
 
-@tool
-def osm_search(place_name: str, city: str = "") -> str:
-    """
-    Search OpenStreetMap Nominatim for places, addresses, landmarks, coordinates.
-    Use for: finding exact locations, addresses of hotels/restaurants/attractions.
-    Args:
-        place_name: Name of the place
-        city: City name for better accuracy (optional)
-    """
-    try:
-        query = f"{place_name} {city}".strip()
-        res = requests.get(
-            "https://nominatim.openstreetmap.org/search",
-            params={"q": query, "format": "json", "limit": 5, "addressdetails": 1},
-            headers={"User-Agent": "YatripAI/1.0"},
-            timeout=8,
-        )
-        data = res.json()
-        if not data:
-            return f"No location found for '{query}' on OpenStreetMap."
+SYSTEM_PROMPT = """You are Yatrip AI, a travel assistant for India.
 
-        results = []
-        for p in data[:3]:
-            addr = p.get("address", {})
-            results.append(
-                f"📍 {p.get('display_name', '')}\n"
-                f"   Type: {p.get('type', 'N/A')} | "
-                f"Lat: {p.get('lat')}, Lon: {p.get('lon')}\n"
-                f"   City: {addr.get('city', addr.get('town', 'N/A'))} | "
-                f"State: {addr.get('state', 'N/A')}"
-            )
-        return "\n\n".join(results)
-    except Exception as e:
-        logger.error(f"osm_search error: {e}")
-        return f"OSM search failed: {str(e)}"
-
-
-@tool
-def get_nearby_places(
-    latitude: float,
-    longitude: float,
-    place_type: str = "tourism",
-    radius_meters: int = 1000,
-) -> str:
-    """
-    Find nearby places using OpenStreetMap Overpass API.
-    Use for: finding restaurants, hotels, attractions, bus stops near a location.
-    Args:
-        latitude: Latitude coordinate
-        longitude: Longitude coordinate
-        place_type: 'restaurant', 'hotel', 'attraction', 'bus_stop', 'metro', 'museum', 'park', 'cafe'
-        radius_meters: Search radius in meters (default 1000)
-    """
-    try:
-        tag_map = {
-            "restaurant":  'amenity"="restaurant',
-            "hotel":       'tourism"="hotel',
-            "attraction":  'tourism"="attraction',
-            "bus_stop":    'highway"="bus_stop',
-            "metro":       'railway"="station',
-            "museum":      'tourism"="museum',
-            "park":        'leisure"="park',
-            "cafe":        'amenity"="cafe',
-            "temple":      'amenity"="place_of_worship',
-        }
-        tag = tag_map.get(place_type, 'tourism"="attraction')
-        query = f"""
-        [out:json][timeout:15];
-        node["{tag}](around:{radius_meters},{latitude},{longitude});
-        out body 8;
-        """
-        res = requests.post(
-            "https://overpass-api.de/api/interpreter",
-            data={"data": query},
-            timeout=15,
-        )
-        elements = res.json().get("elements", [])
-        if not elements:
-            return f"No {place_type}s found within {radius_meters}m."
-
-        results = []
-        for el in elements[:6]:
-            tags = el.get("tags", {})
-            name = tags.get("name", tags.get("name:en", "Unnamed"))
-            info = f"📍 {name} ({el.get('lat')}, {el.get('lon')})"
-            if tags.get("cuisine"):   info += f" | Cuisine: {tags['cuisine']}"
-            if tags.get("opening_hours"): info += f" | Hours: {tags['opening_hours']}"
-            if tags.get("phone"):     info += f" | ☎ {tags['phone']}"
-            results.append(info)
-
-        return f"Nearby {place_type}s:\n" + "\n".join(results)
-    except Exception as e:
-        logger.error(f"get_nearby_places error: {e}")
-        return f"Nearby search failed: {str(e)}"
-
-
-@tool
-def get_weather(city: str) -> str:
-    """
-    Get current weather and 3-day forecast. Completely free, no API key needed.
-    Use when user asks about weather before traveling to a city.
-    Args:
-        city: City name e.g. 'Delhi', 'Mumbai', 'Jaipur'
-    """
-    try:
-        geo = requests.get(
-            "https://nominatim.openstreetmap.org/search",
-            params={"q": city + " India", "format": "json", "limit": 1},
-            headers={"User-Agent": "YatripAI/1.0"},
-            timeout=5,
-        ).json()
-        if not geo:
-            return f"Could not find coordinates for {city}."
-
-        lat, lon = geo[0]["lat"], geo[0]["lon"]
-        w = requests.get(
-            "https://api.open-meteo.com/v1/forecast",
-            params={
-                "latitude": lat, "longitude": lon,
-                "current": "temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code",
-                "daily": "temperature_2m_max,temperature_2m_min,precipitation_sum",
-                "timezone": "Asia/Kolkata",
-                "forecast_days": 3,
-            },
-            timeout=8,
-        ).json()
-
-        cur = w.get("current", {})
-        daily = w.get("daily", {})
-        codes = {
-            0: "Clear ☀️", 1: "Mainly clear 🌤️", 2: "Partly cloudy ⛅",
-            3: "Overcast ☁️", 45: "Foggy 🌫️", 51: "Light drizzle 🌦️",
-            61: "Rain 🌧️", 80: "Showers 🌦️", 95: "Thunderstorm ⛈️",
-        }
-        condition = codes.get(cur.get("weather_code", 0), "Unknown")
-
-        result = (
-            f"🌤️ **{city} Weather:**\n"
-            f"Now: {cur.get('temperature_2m')}°C, {condition}\n"
-            f"Humidity: {cur.get('relative_humidity_2m')}% | Wind: {cur.get('wind_speed_10m')} km/h\n\n"
-            f"📅 3-Day Forecast:\n"
-        )
-        for i in range(min(3, len(daily.get("time", [])))):
-            result += (
-                f"  {daily['time'][i]}: "
-                f"{daily['temperature_2m_max'][i]}°C / {daily['temperature_2m_min'][i]}°C"
-                f" | Rain: {daily['precipitation_sum'][i]}mm\n"
-            )
-        return result
-    except Exception as e:
-        logger.error(f"get_weather error: {e}")
-        return f"Weather unavailable: {str(e)}"
-
-
-@tool
-def yatrip_db_search(query: str) -> str:
-    """
-    Search Yatrip's verified local database (hotels, food, attractions, rentals).
-    Use for: finding specific Yatrip listings and verified local data.
-    """
-    try:
-        # Check if Pinecone is configured
-        if not os.environ.get("PINECONE_API_KEY") or not os.environ.get("GEMINI_API_KEY"):
-            return "Note: Yatrip RAG database is not connected (Missing API Keys). Providing general info instead."
-
-        from langchain_pinecone import PineconeVectorStore
-        embeddings = GoogleGenerativeAIEmbeddings(
-            model="models/text-embedding-004",
-            google_api_key=os.environ.get("GEMINI_API_KEY"),
-        )
-        vs = PineconeVectorStore(
-            index_name=os.environ.get("PINECONE_INDEX_NAME", "yatrip-rag"),
-            embedding=embeddings,
-            pinecone_api_key=os.environ.get("PINECONE_API_KEY"),
-        )
-        docs = vs.similarity_search(query, k=4)
-        if not docs:
-            return "No matching data in Yatrip database for this specific query."
-
-        results = []
-        for doc in docs:
-            src = doc.metadata.get("source", "yatrip").upper()
-            title = doc.metadata.get("title", "Listing")
-            results.append(f"[{src}] {title}\n{doc.page_content[:400]}")
-        return "Verified Yatrip Data:\n\n" + "\n\n---\n\n".join(results)
-    except Exception as e:
-        logger.error(f"yatrip_db_search error: {e}")
-        return "Note: Local database search is currently unavailable. Using web search instead."
-
-
-# ═══════════════════════════════════════════════════════════
-# 🤖  LANGGRAPH AGENT
-# ═══════════════════════════════════════════════════════════
-
-TOOLS = [web_search, osm_search, get_nearby_places, get_weather, yatrip_db_search]
-
-SYSTEM_PROMPT = f"""You are Yatrip AI, an advanced Travel Agent for India.
-
-Core Logic (Follow strictly):
-1. **Source Hierarchy**: 
-   - First, search Yatrip's local database using `yatrip_db_search`. 
-   - If no specific results found, use `web_search` or other tools.
-   - If tools fail or provide no data, do NOT show an error. Use your own knowledge to generate a similar, helpful travel response.
-2. **Language Adherence**: You MUST respond in the EXACT same language as the user (Hindi/Hinglish/English).
-3. **Capabilities**: 
-   - Use `osm_search` and `get_nearby_places` for maps/locations.
-   - Always show prices in ₹ (Indian Rupees).
-4. **Resilience**: If a tool returns an error, ignore the error and answer based on your internal training data.
-5. **Today's Date**: {datetime.now().strftime("%d %B %Y")}
+CORE LOGIC (follow strictly):
+1. Source hierarchy:
+   - Listings that exist on Yatrip come from the `search_*` tools. Use them
+     first whenever the user asks about a specific hotel, attraction, food
+     place, rental or transport hub.
+   - Use `search_knowledge_base` for richer descriptive context about listings.
+   - Use `web_search` only for time-sensitive facts (today's weather alerts,
+     recent reviews, current event prices, visa rules).
+   - Use `geocode_place` / `search_nearby_places` / `get_directions` for
+     locations, "what is near me" and route planning.
+2. Language: reply in the EXACT same language the user wrote in
+   (Hindi, Hinglish or English).
+3. Money: always show amounts as ₹ (Indian Rupees).
+4. Resilience: tools can fail or a DB may be empty. Never surface a raw tool
+   error to the user. If a tool returns no rows or fails, answer from your
+   own knowledge instead, and never invent specific prices, addresses or
+   phone numbers.
+5. Today is {today}.
 """
+
+
+# Friendly labels for the tools the agent actually called.
+TOOL_LABELS = {
+    "search_hotels": "🏨 Yatrip Hotels",
+    "get_hotel_details": "🏨 Yatrip Hotels",
+    "check_room_availability": "📅 Room Availability",
+    "search_attractions": "🏛️ Yatrip Attractions",
+    "search_food": "🍽️ Yatrip Food",
+    "search_rentals": "🏠 Yatrip Rentals",
+    "find_transport_nodes": "🚌 Transport Hubs",
+    "nearby_transport_nodes": "🚌 Nearby Transport",
+    "geocode_place": "🗺️ OpenStreetMap",
+    "reverse_geocode": "🗺️ OpenStreetMap",
+    "search_nearby_places": "📍 OpenStreetMap Nearby",
+    "get_weather": "🌤️ Weather API",
+    "get_directions": "🚗 Route Planner",
+    "web_search": "🌐 Web Search",
+    "search_knowledge_base": "📚 Yatrip Knowledge Base",
+}
+
+FALLBACK_ANSWER = (
+    "Sorry, I'm having trouble reaching my travel data right now. "
+    "Please try again in a moment."
+)
 
 
 class AgentState(TypedDict):
     messages: Annotated[list, add_messages]
 
 
-def get_llm():
-    return ChatGoogleGenerativeAI(
-        model="gemini-2.0-flash",
-        google_api_key=os.environ.get("GEMINI_API_KEY", ""),
-        temperature=0.7,
-    )
+def _system_prompt() -> str:
+    return SYSTEM_PROMPT.format(today=datetime.now().strftime("%d %B %Y"))
 
 
-def should_continue(state: AgentState):
+# ---------------------------------------------------------------------------
+# Graph
+# ---------------------------------------------------------------------------
+
+
+def _should_continue(state: AgentState) -> str:
     last = state["messages"][-1]
-    if hasattr(last, "tool_calls") and last.tool_calls:
+    if getattr(last, "tool_calls", None):
         return "tools"
     return END
 
 
-def call_model(state: AgentState):
-    llm = get_llm().bind_tools(TOOLS)
-    messages = [SystemMessage(content=SYSTEM_PROMPT)] + state["messages"]
-    return {"messages": [llm.invoke(messages)]}
+def _limit_tool_rounds(state: AgentState) -> str:
+    """Stop looping if the model keeps calling tools without concluding."""
+    rounds = sum(1 for message in state["messages"] if getattr(message, "tool_calls", None))
+    if rounds > MAX_TOOL_ROUNDS:
+        logger.warning("Tool call limit (%d) reached, forcing a final answer", MAX_TOOL_ROUNDS)
+        return END
+    return "tools"
 
 
-def build_agent():
-    tool_node = ToolNode(TOOLS)
-    g = StateGraph(AgentState)
-    g.add_node("agent", call_model)
-    g.add_node("tools", tool_node)
-    g.set_entry_point("agent")
-    g.add_conditional_edges("agent", should_continue, {"tools": "tools", END: END})
-    g.add_edge("tools", "agent")
-    return g.compile()
+async def _acall_model(state: AgentState, tools: Sequence[Any]):
+    messages = [SystemMessage(content=_system_prompt())] + state["messages"]
+    response, _provider = await llm.ainvoke_chain(
+        messages, tools=tools, label="agent model call"
+    )
+    return {"messages": [response]}
 
 
-# ═══════════════════════════════════════════════════════════
-# 🚀  MAIN ENTRY POINT
-# ═══════════════════════════════════════════════════════════
+async def _abuild_agent(tools: Sequence[Any]):
+    async def call_model(state: AgentState):
+        return await _acall_model(state, tools)
 
-def get_agent_response(query: str, chat_history: list = None, image_data: bytes = None) -> dict:
+    graph = StateGraph(AgentState)
+    graph.add_node("agent", call_model)
+    graph.add_node("tools", ToolNode(list(tools)))
+    graph.set_entry_point("agent")
+    graph.add_conditional_edges(
+        "agent",
+        _should_continue,
+        {"tools": "tools", END: END},
+    )
+    # A second conditional edge from the tool node is what bounds the loop.
+    graph.add_conditional_edges(
+        "tools",
+        _limit_tool_rounds,
+        {"tools": "agent", END: END},
+    )
+    return graph.compile()
+
+
+# ---------------------------------------------------------------------------
+# Result helpers
+# ---------------------------------------------------------------------------
+
+
+def _collect_tool_usage(messages: list[Any]) -> list[str]:
+    used: list[str] = []
+    for message in messages:
+        for call in getattr(message, "tool_calls", None) or []:
+            name = call.get("name") if isinstance(call, dict) else None
+            if name and name not in used:
+                used.append(name)
+    return used
+
+
+def _label_sources(tool_names_used: Sequence[str]) -> list[str]:
+    labels: list[str] = []
+    for name in tool_names_used:
+        label = TOOL_LABELS.get(name)
+        if label and label not in labels:
+            labels.append(label)
+    return labels
+
+
+def _answer_of(message: Any) -> str:
+    content = getattr(message, "content", message)
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts = [
+            block.get("text", "")
+            for block in content
+            if isinstance(block, dict) and block.get("type") == "text"
+        ]
+        return "".join(parts)
+    return str(content)
+
+
+def _vision_answer(query: str, image_data: bytes) -> dict[str, Any]:
+    """Images bypass the graph: the model reads them directly."""
+    encoded = base64.b64encode(image_data).decode()
+    content = [
+        {
+            "type": "text",
+            "text": (
+                "Analyse this image in the context of travel in India and "
+                f"answer: {query}"
+            ),
+        },
+        {
+            "type": "image_url",
+            "image_url": {"url": f"data:image/jpeg;base64,{encoded}"},
+        },
+    ]
+    messages = [SystemMessage(content=_system_prompt()), HumanMessage(content=content)]
+    response, provider = llm.invoke_chain_sync(messages, label="vision model call")
+    logger.info("vision answer served by %s", provider)
+    return {
+        "answer": _answer_of(response),
+        "sources": ["🖼️ Image Analysis"],
+        "tools_used": ["vision"],
+    }
+
+# ---------------------------------------------------------------------------
+# Entry points
+# ---------------------------------------------------------------------------
+
+
+def _build_history(chat_history: Sequence[tuple[str, str]] | None) -> list[Any]:
+    messages: list[Any] = []
+    for human, ai in list(chat_history or [])[-HISTORY_TURNS:]:
+        if human:
+            messages.append(HumanMessage(content=human))
+        if ai:
+            messages.append(AIMessage(content=ai))
+    return messages
+
+
+async def _arespond(
+    query: str,
+    chat_history: Sequence[tuple[str, str]] | None = None,
+    image_data: bytes | None = None,
+) -> dict[str, Any]:
+    if not settings.GEMINI_API_KEY:
+        return {"answer": FALLBACK_ANSWER, "sources": [], "tools_used": []}
+
+    # 1. Vision: no tools involved.
+    if image_data:
+        try:
+            return await asyncio.to_thread(_vision_answer, query, image_data)
+        except Exception as exc:  # noqa: BLE001
+            logger.error("Vision analysis failed: %s", exc)
+            return {"answer": FALLBACK_ANSWER, "sources": [], "tools_used": []}
+
+    # 2. Load the tool surface from MCP.
+    try:
+        tools = await mcp_client.get_tools()
+    except mcp_client.McpUnavailable as exc:
+        logger.warning("MCP unavailable, answering without tools: %s", exc)
+        return await _afallback_answer(query, chat_history)
+
+    if not tools:
+        return await _afallback_answer(query, chat_history)
+
+    # 3. Run the graph.
+    messages = _build_history(chat_history)
+    messages.append(HumanMessage(content=query))
+
+    try:
+        agent = await _abuild_agent(tools)
+        result = await agent.ainvoke({"messages": messages})
+    except Exception as exc:  # noqa: BLE001
+        logger.error("Agent run failed, falling back to a plain LLM reply: %s", exc)
+        return await _afallback_answer(query, chat_history)
+
+    result_messages = result["messages"]
+    tool_names_used = _collect_tool_usage(result_messages)
+    return {
+        "answer": _answer_of(result_messages[-1]),
+        "sources": _label_sources(tool_names_used),
+        "tools_used": tool_names_used,
+    }
+
+
+async def _afallback_answer(
+    query: str,
+    chat_history: Sequence[tuple[str, str]] | None = None,
+) -> dict[str, Any]:
+    try:
+        messages = _build_history(chat_history)[-VISION_TURNS:]
+        messages.append(HumanMessage(content=query))
+        response, _provider = await llm.ainvoke_chain(
+            [SystemMessage(content=_system_prompt())] + messages,
+            label="fallback model call",
+        )
+        return {"answer": _answer_of(response), "sources": [], "tools_used": []}
+    except Exception as exc:  # noqa: BLE001
+        logger.error("Fallback LLM reply failed: %s", exc)
+        return {"answer": _unavailable_message(exc), "sources": [], "tools_used": []}
+
+
+def _unavailable_message(exc: Exception) -> str:
+    """Say *why* the assistant is down instead of a generic apology."""
+    if isinstance(exc, llm.AllProvidersExhausted):
+        daily = [name for name, why in exc.reasons.items() if why == "daily quota exhausted"]
+        if daily and len(daily) == len([r for r in exc.reasons.values() if r]):
+            return (
+                "The travel assistant has run out of AI model quota on every "
+                "configured provider (" + ", ".join(sorted(daily)) + "). "
+                "It will be available again once the quota resets."
+            )
+        return (
+            "The travel assistant cannot reach any AI model right now ("
+            + "; ".join(f"{n}: {w}" for n, w in exc.reasons.items())
+            + "). Please try again shortly."
+        )
+    if isinstance(exc, DailyQuotaExhausted) or is_daily_quota_exhausted(exc):
+        return (
+            "The travel assistant has reached its daily AI request limit, "
+            "so it cannot answer right now. Please try again tomorrow."
+        )
+    return FALLBACK_ANSWER
+
+
+def get_agent_response(
+    query: str,
+    chat_history: Sequence[tuple[str, str]] | None = None,
+    image_data: bytes | None = None,
+) -> dict[str, Any]:
     """
-    Args:
-        query: User message
-        chat_history: List of (human, ai) tuples
-        image_data: Optional image bytes for vision analysis
-    Returns:
-        { answer, sources, tools_used }
+    Sync entry point used by the DRF view.
+
+    Returns ``{"answer", "sources", "tools_used"}``. Safe to call from both
+    WSGI (no running loop) and ASGI (loop already running).
     """
     try:
-        agent = build_agent()
-        llm = get_llm()
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(_arespond(query, chat_history, image_data))
 
-        # ── Vision Handling ──────────────────────────────
-        if image_data:
-            from langchain_core.messages import HumanMessage
-            import base64
-            
-            image_part = {
-                "type": "image_url",
-                "image_url": {"url": f"data:image/jpeg;base64,{base64.b64encode(image_data).decode()}"},
-            }
-            content = [{"type": "text", "text": f"Analyze this image in context of travel/tourism and answer: {query}"}, image_part]
-            
-            messages = [SystemMessage(content=SYSTEM_PROMPT), HumanMessage(content=content)]
-            resp = llm.invoke(messages)
-            return {"answer": resp.content, "sources": ["🖼️ Image Analysis"], "tools_used": ["vision"]}
+    # Already inside an event loop: hand off to a worker thread that owns its
+    # own loop rather than trying to nest one.
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+        return pool.submit(
+            asyncio.run, _arespond(query, chat_history, image_data)
+        ).result()
 
-        # ── Regular Agent Flow ────────────────────────────
-        messages = []
-        if chat_history:
-            for h, a in chat_history[-10:]:
-                messages.append(HumanMessage(content=h))
-                messages.append(AIMessage(content=a))
-        messages.append(HumanMessage(content=query))
 
-        result = agent.invoke({"messages": messages})
-
-        # Final answer
-        final = result["messages"][-1]
-        answer = final.content if hasattr(final, "content") else str(final)
-
-        # Tools used
-        tools_used = []
-        for msg in result["messages"]:
-            if hasattr(msg, "tool_calls") and msg.tool_calls:
-                for tc in msg.tool_calls:
-                    name = tc.get("name", "")
-                    if name and name not in tools_used:
-                        tools_used.append(name)
-
-        # Sources display name mapping
-        source_map = {
-            "web_search":        "🌐 Web Search",
-            "osm_search":        "🗺️ OpenStreetMap",
-            "get_nearby_places": "📍 OSM Nearby",
-            "get_weather":       "🌤️ Weather API",
-            "yatrip_db_search":  "🏨 Yatrip DB RAG",
-        }
-        sources = [source_map[t] for t in tools_used if t in source_map]
-
-        return {"answer": answer, "sources": sources, "tools_used": tools_used}
-
-    except Exception as e:
-        logger.error(f"Agent error: {e}")
-        try:
-            fallback_llm = get_llm()
-            resp = fallback_llm.invoke([SystemMessage(content=SYSTEM_PROMPT), HumanMessage(content=query)])
-            return {"answer": resp.content, "sources": [], "tools_used": []}
-        except Exception as e2:
-            logger.error(f"Fallback error: {e2}")
-            return {
-                "answer": "Sorry, I'm experiencing some technical difficulties. Please try again later!",
-                "sources": [], "tools_used": [],
-            }
+# Re-exported so callers that already speak async do not have to know the
+# sync shim exists. ``_arespond`` is already a coroutine function, so it is
+# aliased directly - wrapping it in ``async_to_sync`` would make the "async"
+# entry point synchronous and emit a RuntimeWarning.
+arespond = _arespond
+get_agent_response_async = _arespond

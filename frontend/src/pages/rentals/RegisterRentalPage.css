@@ -1,6 +1,6 @@
 .rrp-page {
-  min-height: 100vh;
-  background: #f1f5f9;
+  min-height: calc(100dvh - var(--nav-h));
+  background: var(--bg-body);
   padding: 40px 20px;
   font-family: 'Inter', sans-serif;
 }
@@ -17,7 +17,7 @@
 .rrp-back {
   background: none;
   border: none;
-  color: #64748b;
+  color: var(--text-muted);
   cursor: pointer;
   font-weight: 600;
   margin-bottom: 12px;
@@ -25,16 +25,16 @@
 
 .rrp-header h1 {
   font-size: 2rem;
-  color: #1e293b;
+  color: var(--text);
   margin: 0 0 6px;
 }
 
 .rrp-header p {
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 .rrp-card {
-  background: #fff;
+  background: var(--bg-card-solid);
   border-radius: 20px;
   padding: 32px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.05);
@@ -46,9 +46,9 @@
 
 .rrp-section h3 {
   font-size: 1.1rem;
-  color: #334155;
+  color: var(--text-soft);
   margin-bottom: 16px;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--line);
   padding-bottom: 8px;
 }
 
@@ -60,7 +60,7 @@
   display: block;
   font-size: 0.85rem;
   font-weight: 600;
-  color: #64748b;
+  color: var(--text-muted);
   margin-bottom: 6px;
 }
 
@@ -93,12 +93,12 @@
 
 .rrp-amenity-pill {
   padding: 8px 16px;
-  background: #f8fafc;
+  background: var(--bg-raised);
   border: 1.5px solid #e2e8f0;
   border-radius: 99px;
   font-size: 0.85rem;
   font-weight: 600;
-  color: #64748b;
+  color: var(--text-muted);
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -136,7 +136,7 @@
 }
 
 .rrp-error {
-  background: #fef2f2;
+  background: rgba(239, 68, 68, 0.12);
   color: #dc2626;
   padding: 12px;
   border-radius: 8px;

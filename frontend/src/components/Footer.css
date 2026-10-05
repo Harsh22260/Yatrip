@@ -1,250 +1,374 @@
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap');
+/* ═══ Footer ═══════════════════════════════════════════════════════════════
+   The wave softens the seam between the page and the dark footer.
 
+   Two earlier attempts did not work, both verified by reading actual pixels:
+
+   1. Wave at top:-88px inside a --sp-9 margin-top. The margin was an identical
+      empty 96px band on every route.
+   2. Wave at top:0, inside the footer. Invisible -- the footer background had
+      already painted --ink-900 across the whole box, so the wave's identical
+      --ink-900 fill had nothing to contrast against. Flat edge, no curve.
+
+   So the wave has to straddle the seam: half above it, half inside. Above the
+   seam it is dark --ink-900 against the page's lighter dark background, and
+   inside the footer it merges into the identical fill. That is what makes the
+   curve visible without reserving a margin above the footer and without
+   repainting any page background. */
+
+/* No max-width here, for the same reason as .navbar__inner: a 1240px cap inside
+   a 1920px viewport left a 340px empty gutter at each end of the footer and
+   made it read as a narrow column rather than a full-width band. Page content
+   still lines up because every page wraps itself in .yt-container. */
 .footer {
-  background: #0d0d1a;
-  color: rgba(255,255,255,0.7);
-  font-family: 'DM Sans', sans-serif;
   position: relative;
-  margin-top: 80px;
+  margin-top: 0;
+  /* --ink-850, not --ink-900. The page canvas is --ink-900, so a footer in the
+     same colour made the two surfaces indistinguishable and the wave had nothing
+     to contrast against -- the S was drawn but read as a flat edge. One step up
+     the ramp is enough to separate the band without the footer going pale.
+
+     This only touches the footer. No page background is repainted. */
+  background: var(--ink-850);
 }
 
+/* Sits inside the footer (top:0) rather than hanging above it.
+
+   Hanging it above at top:-90px meant the wave painted over the last 90px of
+   every page's own content, and the only way to stop that was to reserve a
+   margin -- which is what produced the empty band in the first place.
+
+   Drawn at top:0 in the page colour, it instead carves a curved notch out of
+   the footer's top edge. Nothing above the footer is touched, so no margin is
+   needed and no page background has to be repainted. */
 .footer-wave {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
-  line-height: 0;
-  margin-top: -79px;
+  height: 90px;
   pointer-events: none;
 }
-.footer-wave svg { display: block; width: 100%; height: 80px; }
 
+.footer-wave svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* No max-width here, for the same reason as .navbar__inner: a 1240px cap inside
+   a 1920px viewport left a 340px empty gutter at each end of the footer and
+   made it read as a narrow column rather than a full-width band. Page content
+   still lines up because every page wraps itself in .yt-container. */
 .footer__inner {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 60px 28px 40px;
+  /* Clears the 90px wave, which now sits inside the footer's top edge. */
+  padding: calc(var(--sp-6) + 4.5rem) clamp(1rem, 4vw, 2.5rem) var(--sp-5);
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 1.6fr;
-  gap: 40px;
+  grid-template-columns: minmax(280px, 1.7fr) repeat(3, minmax(140px, 1fr));
+  gap: var(--sp-6) var(--sp-5);
 }
 
-/* ── Brand col ───────────── */
+/* ── Brand column ──────────────────────────────────────────────────────── */
+.footer-brand-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-4);
+}
+
 .footer-logo {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  text-decoration: none;
-  font-family: 'Syne', sans-serif;
-  font-size: 22px;
-  font-weight: 800;
-  color: #fff;
-  margin-bottom: 14px;
-}
-.footer-accent { color: #FF6B35; }
-
-.footer-tagline {
-  font-size: 13.5px;
-  line-height: 1.7;
-  color: rgba(255,255,255,0.5);
-  margin-bottom: 20px;
-  max-width: 280px;
+  transition: transform var(--t-base) var(--ease);
 }
 
-.footer-socials {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 24px;
-}
-
-.social-btn {
-  width: 36px; height: 36px;
-  border-radius: 10px;
-  background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(255,255,255,0.1);
-  display: flex; align-items: center; justify-content: center;
-  color: rgba(255,255,255,0.7);
-  text-decoration: none;
-  font-size: 13px;
-  font-weight: 700;
-  transition: all 0.2s;
-}
-.social-btn:hover {
-  background: rgba(255,107,53,0.2);
-  border-color: rgba(255,107,53,0.4);
-  color: #FF6B35;
+.footer-logo:hover {
   transform: translateY(-2px);
 }
 
-.app-badges {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+.footer-tagline {
+  font-size: 0.92rem;
+  line-height: 1.7;
+  color: var(--text-muted);
+  max-width: 42ch;
 }
 
-.app-badge {
+.footer-badges {
   display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.footer-badge {
+  display: inline-flex;
   align-items: center;
-  gap: 12px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 12px;
-  padding: 10px 14px;
-  cursor: pointer;
-  transition: all 0.2s;
-  max-width: 160px;
-}
-.app-badge:hover {
-  background: rgba(255,255,255,0.09);
-  border-color: rgba(255,255,255,0.18);
+  gap: 0.38rem;
+  padding: 0.32rem 0.7rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--line);
+  background: var(--bg-inset);
+  font-size: 0.76rem;
+  font-weight: 500;
+  color: var(--text-soft);
 }
 
-.badge-icon { font-size: 20px; }
-.badge-sub  { font-size: 10px; color: rgba(255,255,255,0.4); line-height: 1; margin-bottom: 2px; }
-.badge-main { font-size: 13px; color: #fff; font-weight: 600; line-height: 1; }
+.footer-badge svg {
+  color: var(--brand-400);
+  flex: none;
+}
 
-/* ── Link cols ───────────── */
+/* ── Link columns ──────────────────────────────────────────────────────── */
 .footer-col-title {
-  font-family: 'Syne', sans-serif;
-  font-size: 13px;
+  font-family: var(--font-sans);
+  font-size: 0.74rem;
   font-weight: 700;
-  color: #fff;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  letter-spacing: 1.2px;
-  margin-bottom: 18px;
+  color: var(--text-faint);
+  margin-bottom: var(--sp-4);
 }
 
 .footer-link-list {
-  list-style: none;
-  padding: 0; margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0.15rem;
 }
 
 .footer-link {
-  color: rgba(255,255,255,0.5);
-  text-decoration: none;
-  font-size: 14px;
-  transition: all 0.2s;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-}
-.footer-link:hover {
-  color: #FF6B35;
-  padding-left: 4px;
+  gap: 0.5rem;
+  padding: 0.4rem 0.5rem 0.4rem 0;
+  font-size: 0.9rem;
+  color: var(--text-soft);
+  transition: color var(--t-base) var(--ease);
 }
 
-/* ── Newsletter ──────────── */
+.footer-link-icon {
+  color: var(--text-faint);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: all var(--t-base) var(--ease);
+  flex: none;
+}
+
+/* The icon occupies its slot on hover only, so the label of an unhovered link
+   stays flush with the ones below it. */
+.footer-link:hover {
+  color: var(--brand-300);
+}
+
+.footer-link:hover .footer-link-icon {
+  opacity: 1;
+  transform: none;
+  color: var(--brand-400);
+}
+
+/* ── Newsletter ────────────────────────────────────────────────────────── */
+.footer-newsletter {
+  width: 100%;
+  margin-top: var(--sp-2);
+}
+
 .newsletter-text {
-  font-size: 13px;
-  color: rgba(255,255,255,0.5);
-  line-height: 1.6;
-  margin-bottom: 14px;
+  font-size: 0.84rem;
+  color: var(--text-muted);
+  margin-bottom: var(--sp-3);
+  max-width: 38ch;
 }
 
 .newsletter-form {
+  position: relative;
   display: flex;
-  gap: 8px;
-  margin-bottom: 24px;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.3rem 0.3rem 0.85rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--line-strong);
+  background: var(--bg-inset);
+  max-width: 340px;
+  transition: border-color var(--t-base) var(--ease);
+}
+
+.newsletter-form:focus-within {
+  border-color: var(--brand-400);
+}
+
+.newsletter-icon {
+  color: var(--text-faint);
+  flex: none;
 }
 
 .newsletter-input {
   flex: 1;
-  background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 10px;
-  padding: 11px 14px;
-  color: #fff;
-  font-size: 13.5px;
-  font-family: 'DM Sans', sans-serif;
+  min-width: 0;
+  padding: 0.55rem 0.2rem;
+  font-size: 0.88rem;
+  color: var(--text);
+  background: none;
+  border: none;
   outline: none;
-  transition: border-color 0.2s;
 }
-.newsletter-input::placeholder { color: rgba(255,255,255,0.3); }
-.newsletter-input:focus { border-color: #FF6B35; }
+
+.newsletter-input::placeholder {
+  color: var(--text-faint);
+}
 
 .newsletter-btn {
-  background: linear-gradient(135deg, #FF6B35, #ff8c42);
-  border: none;
-  border-radius: 10px;
-  width: 42px;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border-radius: 50%;
   color: #fff;
-  font-size: 18px;
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-  box-shadow: 0 4px 14px rgba(255,107,53,0.4);
-}
-.newsletter-btn:hover {
-  transform: scale(1.05);
-  box-shadow: 0 6px 20px rgba(255,107,53,0.55);
+  background: linear-gradient(135deg, var(--brand-400), var(--brand-600));
+  box-shadow: var(--shadow-brand);
+  transition: transform var(--t-base) var(--ease-spring);
 }
 
-.footer-stats {
+.newsletter-btn:hover {
+  transform: scale(1.08);
+}
+
+.newsletter-msg {
   display: flex;
-  gap: 16px;
+  align-items: center;
+  gap: 0.32rem;
+  margin-top: 0.5rem;
+  font-size: 0.78rem;
+}
+
+.newsletter-msg--ok   { color: var(--ok-400); }
+.newsletter-msg--bad  { color: var(--bad-400); }
+
+/* ── Stats strip ───────────────────────────────────────────────────────── */
+.footer-stats {
+  padding: 0 clamp(1rem, 4vw, 2.5rem) var(--sp-5);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-5);
+  border-bottom: 1px solid var(--line);
 }
 
 .footer-stat {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: baseline;
+  gap: 0.5rem;
 }
 
 .stat-num {
-  font-family: 'Syne', sans-serif;
-  font-size: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--brand-400);
+  line-height: 1;
+}
+
+.stat-star {
+  color: var(--gold-400);
 }
 
 .stat-label {
-  font-size: 11px;
-  color: rgba(255,255,255,0.4);
+  font-size: 0.78rem;
+  color: var(--text-faint);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.1em;
 }
 
-/* ── Bottom bar ──────────── */
+/* ── Bottom bar ────────────────────────────────────────────────────────── */
 .footer-bottom {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 20px 28px;
-  border-top: 1px solid rgba(255,255,255,0.07);
+  padding: var(--sp-4) clamp(1rem, 4vw, 2.5rem) var(--sp-6);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 13px;
-  color: rgba(255,255,255,0.35);
+  gap: var(--sp-4);
   flex-wrap: wrap;
-  gap: 10px;
+  font-size: 0.82rem;
+  color: var(--text-faint);
 }
 
 .footer-bottom-links {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--sp-4);
 }
 
 .footer-bottom-links a {
-  color: rgba(255,255,255,0.35);
-  text-decoration: none;
-  transition: color 0.2s;
-}
-.footer-bottom-links a:hover { color: #FF6B35; }
-
-/* ── Responsive ──────────── */
-@media (max-width: 1100px) {
-  .footer__inner {
-    grid-template-columns: 1fr 1fr 1fr;
-  }
-  .footer-brand-col { grid-column: 1 / -1; }
-  .footer-newsletter-col { grid-column: 1 / -1; }
-  .footer-stats { justify-content: flex-start; }
+  transition: color var(--t-base) var(--ease);
 }
 
-@media (max-width: 600px) {
+.footer-bottom-links a:hover {
+  color: var(--brand-300);
+}
+
+/* Collapsed by default: attribution has to be reachable, not in the reader's
+   way on every page. */
+.footer-credits {
+  max-width: var(--max-w);
+  margin-inline: auto;
+  padding: 0 clamp(1rem, 4vw, 2.5rem) var(--sp-6);
+  font-size: 0.78rem;
+  color: var(--text-faint);
+}
+
+.footer-credits summary {
+  cursor: pointer;
+  padding: var(--sp-2) 0;
+  color: var(--text-muted);
+  transition: color var(--t-base) var(--ease);
+}
+
+.footer-credits summary:hover {
+  color: var(--brand-300);
+}
+
+.footer-credits-note {
+  max-width: 60ch;
+  margin: 0 0 var(--sp-2);
+}
+
+.footer-credits-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 0.3rem var(--sp-4);
+}
+
+.footer-credits-list a {
+  transition: color var(--t-base) var(--ease);
+}
+
+.footer-credits-list a:hover {
+  color: var(--brand-300);
+}
+
+/* ── Responsive ────────────────────────────────────────────────────────── */
+@media (max-width: 980px) {
   .footer__inner {
     grid-template-columns: 1fr 1fr;
-    padding: 40px 20px 30px;
   }
-  .footer-brand-col, .footer-newsletter-col { grid-column: 1 / -1; }
-  .footer-bottom { flex-direction: column; text-align: center; }
+
+  .footer-brand-col {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 560px) {
+  .footer__inner {
+    grid-template-columns: 1fr;
+    gap: var(--sp-5);
+  }
+
+  .footer-stats {
+    gap: var(--sp-4);
+  }
+
+  .footer-bottom {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--sp-3);
+  }
 }

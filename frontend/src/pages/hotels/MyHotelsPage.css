@@ -1,9 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@400;500;600&display=swap');
 
 .mhp-page {
-  min-height: 100vh;
-  background: #f5f0ea;
-  font-family: 'DM Sans', sans-serif;
+  min-height: calc(100dvh - var(--nav-h));
+  background: var(--bg-body);
+  font-family: var(--font-sans);
 }
 
 .mhp-header {
@@ -22,7 +22,7 @@
 }
 
 .mhp-title {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 2rem;
   color: #f5e8d0;
   margin: 0 0 4px;
@@ -40,7 +40,7 @@
   border: none;
   padding: 11px 22px;
   border-radius: 10px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-sans);
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
@@ -67,7 +67,7 @@
 
 /* Card */
 .mhp-card {
-  background: #fff;
+  background: var(--bg-card-solid);
   border-radius: 18px;
   overflow: hidden;
   border: 1px solid #e8e0d6;
@@ -113,7 +113,7 @@
 }
 
 .mhp-hotel-name {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 1.1rem;
   color: #1a1209;
   margin: 0;
@@ -154,7 +154,7 @@
 
 .mhp-stat-val {
   display: block;
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 1rem;
   font-weight: 700;
   color: #1a1209;
@@ -177,7 +177,7 @@
   flex: 1;
   padding: 10px;
   border-radius: 9px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-sans);
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
@@ -194,7 +194,7 @@
 
 .mhp-btn.secondary {
   background: #f0ece6;
-  color: #5a5048;
+  color: var(--text-soft);
 }
 
 .mhp-btn.secondary:hover { background: #e0d9d0; }
@@ -227,7 +227,7 @@
 .mhp-empty-icon { font-size: 4rem; margin-bottom: 16px; }
 
 .mhp-empty h2 {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 1.5rem;
   color: #1a1209;
   margin: 0 0 8px;
@@ -242,7 +242,7 @@
 .mhp-error {
   text-align: center;
   padding: 48px;
-  color: #842029;
+  color: var(--bad-400);
 }
 
 .mhp-error button {
@@ -253,5 +253,5 @@
   padding: 9px 22px;
   border-radius: 8px;
   cursor: pointer;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-sans);
 }

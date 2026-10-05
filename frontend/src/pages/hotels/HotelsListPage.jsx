@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useHotels } from "../../hooks/useHotels";
+import useCurrentUser from "../../hooks/useCurrentUser";
 import HotelCard from "../../components/hotels/HotelCard";
 import "./HotelsListPage.css";
 
@@ -9,10 +10,12 @@ const HotelsListPage = () => {
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
 
-  const token = localStorage.getItem('access_token');
-  const userStr = localStorage.getItem('user');
-  const user = userStr ? JSON.parse(userStr) : null;
-  const isBusiness = user?.is_business || user?.user_type === 'business';
+  // The session lives in an HttpOnly cookie and the cached profile in
+  // `authService`, so `localStorage.getItem('access_token')` always returned
+  // null: the banner below never rendered, and `isBusiness` tested two fields
+  // the API does not have, so it was false even for real owners.
+  const { user, isOwner } = useCurrentUser();
+  const isSignedIn = Boolean(user);
 
   const filtered = Array.isArray(hotels) ? hotels.filter((h) =>
     h.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -27,7 +30,7 @@ const HotelsListPage = () => {
         <div className="hlp-search-wrap">
           <input
             className="hlp-search"
-            type="text"
+            type="search"
             placeholder="Search by name or city..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -37,29 +40,29 @@ const HotelsListPage = () => {
       </header>
 
       {/* Business Banner */}
-      {token && (
+      {isSignedIn && (
         <div className="hlp-business-bar">
           <div className="hlp-business-info">
-            <span>🏢 {isBusiness ? 'Business Account' : 'Partner with Yatrip'}</span>
-            <p>{isBusiness ? 'Manage your properties' : 'Want to list your hotel? Start here'}</p>
+            <span>{isOwner ? 'Business Account' : 'Partner with Yatrip'}</span>
+            <p>{isOwner ? 'Manage your properties' : 'Want to list your hotel? Start here'}</p>
           </div>
           <div className="hlp-business-actions">
-            {isBusiness && (
+            {isOwner && (
               <button className="hlp-biz-btn" onClick={() => navigate('/my-hotels')}>
                 My Hotels
               </button>
             )}
             <button className="hlp-biz-btn primary" onClick={() => navigate('/register-hotel')}>
-              {isBusiness ? '+ Register Hotel' : 'List Your Hotel'}
+              {isOwner ? '+ Register Hotel' : 'List Your Hotel'}
             </button>
           </div>
         </div>
       )}
 
       {/* Login prompt agar login nahi kiya */}
-      {!token && (
+      {!isSignedIn && (
         <div className="hlp-login-bar">
-          <span>🔐 Login to book hotels or register your property</span>
+          <span>Login to book hotels or register your property</span>
           <button className="hlp-login-btn" onClick={() => navigate('/login')}>Login</button>
         </div>
       )}
