@@ -1,5 +1,7 @@
 # Yatrip
 
+> A portmanteau of **Yatra** (Sanskrit: *journey*) and **trip**.
+
 Travel platform with hotels, rentals, food, attractions, transport and an AI
 assistant. Django + DRF + PostGIS on the backend, React 19 + Vite on the
 frontend.
